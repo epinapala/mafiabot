@@ -18,7 +18,7 @@ bot.startRTM(function (err, bot, payload) {
   }
 });
 
-controller.hears([COMMAND_DELIMITER + "init"], ["direct_message", "direct_mention", "mention", "ambient"], function (bot, message) {
+controller.hears([COMMAND_DELIMITER + "init_channel"], ["direct_message", "direct_mention", "mention", "ambient"], function (bot, message) {
   bot.api.channels.list({ channel: message.channel }, function (err, response) {
     var current_channel_id = message.channel;
     if (err) {
@@ -29,25 +29,71 @@ controller.hears([COMMAND_DELIMITER + "init"], ["direct_message", "direct_mentio
         var channel = _.find(channels, function (object) {
           return object.id === current_channel_id
         });
-        bot.reply(message, "Channel name is : " + channel.name);
-        var users = channel.members || [];
-        _.each(users, function (id) {
-          bot.api.users.info({ user: id }, function (err, user_data) {
-            var user = user_data.user;
-            if (err) {
-              bot.reply(message, "Unable to find user : " + id);
-            } else {
-              bot.reply(message, user.name);
-              controller.storage.users.save(user, function (err) {
-                if (err) {
-                  console.log("Unable to save user : " + user.name);
-                } else {
-                  console.log("Saved user : " + user.name);
-                }
-              });
-            }
+        if (channel) {
+          bot.reply(message, "Channel name is : " + channel.name);
+          var users = channel.members || [];
+          _.each(users, function (id) {
+            bot.api.users.info({ user: id }, function (err, user_data) {
+              var user = user_data.user;
+              if (err) {
+                bot.reply(message, "Unable to find user : " + id);
+              } else {
+                bot.reply(message, user.name);
+                controller.storage.users.save(user, function (err) {
+                  if (err) {
+                    console.log("Unable to save user : " + user.name);
+                  } else {
+                    console.log("Saved user : " + user.name);
+                  }
+                });
+              }
+            });
           });
+        } else {
+          bot.reply(message, 'unable get channel info from slack!');
+        }
+      } else {
+        bot.reply(message, 'No channels returned from slack :(');
+      }
+    }
+  });
+});
+
+controller.hears([COMMAND_DELIMITER + "init"], ["direct_message", "direct_mention", "mention", "ambient"], function (bot, message) {
+  bot.api.groups.list({ group : message.channel }, function (err, response) {
+    var current_group_id = message.channel;
+    if (err) {
+      bot.reply(message, "Unable to extract channel info : " + current_group_id);
+    } else {
+      var groups = response.groups;
+      if (groups) {
+        console.log(groups);
+        var channel = _.find(groups, function (object) {
+          return object.id === current_group_id
         });
+        if (channel) {
+          bot.reply(message, "Channel name is : " + channel.name);
+          var users = channel.members || [];
+          _.each(users, function (id) {
+            bot.api.users.info({ user: id }, function (err, user_data) {
+              var user = user_data.user;
+              if (err) {
+                bot.reply(message, "Unable to find user : " + id);
+              } else {
+                bot.reply(message, user.name);
+                controller.storage.users.save(user, function (err) {
+                  if (err) {
+                    console.log("Unable to save user : " + user.name);
+                  } else {
+                    console.log("Saved user : " + user.name);
+                  }
+                });
+              }
+            });
+          });
+        } else {
+          bot.reply(message, 'unable get channel info from slack!');
+        }
       } else {
         bot.reply(message, 'No channels returned from slack :(');
       }
