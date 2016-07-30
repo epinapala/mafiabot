@@ -4,12 +4,14 @@ var COMMAND_DELIMITER = '!';
 var users = [];
 var util = require('./util');
 
+var token = require('minimist')(process.argv.slice(2)).t;
+
 var controller = Botkit.slackbot({
   json_file_store: './storage'
 });
 
 var bot = controller.spawn({
-  token: "xoxb-64715096103-c4asTzfU2JN3DGSiDMgK19tO"
+  token: token
 });
 
 bot.startRTM(function (err, bot, payload) {
@@ -120,7 +122,7 @@ controller.hears([COMMAND_DELIMITER + "start"], ["direct_message", "direct_menti
     var roles = response
       .text // extract actual message
       .split(',')//split by comma
-      .map( // triem each role
+      .map( // trim each role
       Function.prototype.call,
       String.prototype.trim
       );
@@ -133,23 +135,27 @@ controller.hears([COMMAND_DELIMITER + "start"], ["direct_message", "direct_menti
       if (err) {
         convo.say('Oh no! Not able to read users list!')
       } else {
-        var users = _.map(all_user_data, function (currentObject) {
-          return _.pick(currentObject, "name", "id");
-        });
-        var shuffledUsers = util.fisherYatesShuffle(users);
-        var shuffledRoles = util.fisherYatesShuffle(roles);
-        _.each(users, function (user, index) {
-          user.role = shuffledRoles[index];
-          bot.api.chat.postMessage({ channel: user.id, text: "Hi there! Your role is : " + user.role, username: "mafia-bot" }, function (err, response) {
-            if (err) {
-              console.log("Unable to reveal role to user : " + user.name + ". Error : " + err);
-            } {
-              console.log("Revealed role to user : " + user.name + " via DM");
-            }
+        if (roles.length !== all_user_data.length) {
+          convo.say("Number of roles doesnt match the number of users in this channel. Retry with !start command");
+        } else {
+          var users = _.map(all_user_data, function (currentObject) {
+            return _.pick(currentObject, "name", "id");
           });
-        });
-        convo.say("Roles have been assigned and sent to all users");
-        console.log("here are your roles assigned to members" + JSON.stringify(users));
+          var shuffledUsers = util.fisherYatesShuffle(users);
+          var shuffledRoles = util.fisherYatesShuffle(roles);
+          _.each(users, function (user, index) {
+            user.role = shuffledRoles[index];
+            bot.api.chat.postMessage({ channel: user.id, text: "Hi there! Your role is : " + user.role, username: "mafia-bot" }, function (err, response) {
+              if (err) {
+                console.log("Unable to reveal role to user : " + user.name + ". Error : " + err);
+              } {
+                console.log("Revealed role to user : " + user.name + " via DM");
+              }
+            });
+          });
+          convo.say("Roles have been assigned and sent to all users");
+          console.log("here are your roles assigned to members" + JSON.stringify(users));
+        }
       }
     });
   };

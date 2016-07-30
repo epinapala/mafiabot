@@ -23,6 +23,7 @@
   "homepage": "https://github.com/epinapala/mafiabot#readme",
   "dependencies": {
     "botkit": "^0.2.2",
+    "minimist": "^1.2.0",
     "underscore": "^1.8.3"
   }
 }
