@@ -22,8 +22,10 @@
   },
   "homepage": "https://github.com/epinapala/mafiabot#readme",
   "dependencies": {
+    "bluebird": "^3.4.1",
     "botkit": "^0.2.2",
     "minimist": "^1.2.0",
+    "rimraf": "^2.5.4",
     "underscore": "^1.8.3"
   }
 }
