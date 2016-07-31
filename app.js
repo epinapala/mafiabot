@@ -5,6 +5,7 @@ var users = [];
 var util = require('./util');
 
 var token = require('minimist')(process.argv.slice(2)).t;
+var organizer = require('minimist')(process.argv.slice(2)).o;
 
 var controller = Botkit.slackbot({
   json_file_store: './storage'
@@ -143,14 +144,24 @@ controller.hears([COMMAND_DELIMITER + "start"], ["direct_message", "direct_menti
           });
           var shuffledUsers = util.fisherYatesShuffle(users);
           var shuffledRoles = util.fisherYatesShuffle(roles);
-          _.each(users, function (user, index) {
+          _.each(shuffledUsers, function (user, index) {
             user.role = shuffledRoles[index];
             bot.api.chat.postMessage({ channel: user.id, text: "Hi there! Your role is : " + user.role, username: "mafia-bot" }, function (err, response) {
               if (err) {
                 console.log("Unable to reveal role to user : " + user.name + ". Error : " + err);
               } {
+                console.log("Revealed role to user : " + user.name + " : " + user.role + " via DM");
+              }
+            });
+            bot.api.chat.postMessage({ channel: organizer, text:  user.name +" role is : " + user.role, username: "mafia-bot" }, function (err, response) {
+              if (err) {
+                console.log("Unable to reveal role to user : " + user.name + ". Error : " + err);
+              } {
                 console.log("Revealed role to user : " + user.name + " via DM");
               }
+            });
+			
+            bot.api.chat.postMessage({ channel: organizer, text: '-=-=-=-=-=-=-=-=-=-=-', username: "mafia-bot" }, function (err, response) {
             });
           });
           convo.say("Roles have been assigned and sent to all users");
