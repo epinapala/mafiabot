@@ -85,7 +85,9 @@ controller.hears([COMMAND_DELIMITER + "init"], ["direct_message", "direct_mentio
               var user = user_data.user;
               if (user.is_bot) {
                 console.log("Bot User, Skipping!");
-              } else {
+              } else if(user.id === organizer){
+              	console.log("Organier " + user.name + ", Skipping!");
+              }else {
                 if (err) {
                   bot.reply(message, "Unable to find user : " + id);
                 } else {
