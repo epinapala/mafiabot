@@ -157,15 +157,9 @@ controller.hears([COMMAND_DELIMITER + "start"], ["direct_message", "direct_menti
               }
             });
             bot.api.chat.postMessage({ channel: organizer, text:  user.name +" role is : " + user.role, username: "mafia-bot" }, function (err, response) {
-              if (err) {
-                console.log("Unable to reveal role to user : " + user.name + ". Error : " + err);
-              } {
-                console.log("Revealed role to user : " + user.name + " via DM");
-              }
             });
-			
-            bot.api.chat.postMessage({ channel: organizer, text: '-=-=-=-=-=-=-=-=-=-=-', username: "mafia-bot" }, function (err, response) {
-            });
+          });
+          bot.api.chat.postMessage({ channel: organizer, text: '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-', username: "mafia-bot" }, function (err, response) {
           });
           convo.say("Roles have been assigned and sent to all users");
           console.log("here are your roles assigned to members" + JSON.stringify(users));
