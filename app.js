@@ -13,15 +13,15 @@ var organizer = minimist(process.argv.slice(2)).o;
 var current_group_id = minimist(process.argv.slice(2)).g;
 
 new Promise(function (resolve, reject) {
-    rmdir(storage_directory, function (error) {
-      if (error) {
-        reject(error);
-      }
-      else {
-        resolve();
-      }
-    });
-  }).then(function () {
+  rmdir(storage_directory, function (error) {
+    if (error) {
+      reject(error);
+    }
+    else {
+      resolve();
+    }
+  });
+}).then(function () {
   controller = Botkit.slackbot({ json_file_store: storage_directory });
   bot = controller.spawn({ token: token });
   bot.startRTM(function (err, bot, payload) {
@@ -117,22 +117,22 @@ new Promise(function (resolve, reject) {
             var shuffledUsers = util.fisherYatesShuffle(users);
             var shuffledRoles = util.fisherYatesShuffle(roles);
             _.each(shuffledUsers, function (user, index) {
-            user.role = shuffledRoles[index];
+              user.role = shuffledRoles[index];
 
               new Promise(function (resolve, reject) {
-                  bot.api.chat.postMessage({
-                    channel: user.id, text: 'Hi there! Your role is : ' +
-                      user.role, username: 'mafia-bot'
-                  }, function (err, response) {
-                      if (err) {
-                        reject('Unable to reveal role to user : ' + user.name + '. Error : ' + err);
-                      }
-                      {
-                        console.log('Revealed role to user : ' + user.name + ' : ' + user.role + ' via DM');
-                        resolve(user);
-                      }
-                    });
-                }).then(function resolved(user) {
+                bot.api.chat.postMessage({
+                  channel: user.id, text: 'Hi there! Your role is : ' +
+                  user.role, username: 'mafia-bot'
+                }, function (err, response) {
+                  if (err) {
+                    reject('Unable to reveal role to user : ' + user.name + '. Error : ' + err);
+                  }
+                  {
+                    console.log('Revealed role to user : ' + user.name + ' : ' + user.role + ' via DM');
+                    resolve(user);
+                  }
+                });
+              }).then(function resolved(user) {
                 bot.api.chat.postMessage({
                   channel: organizer, text: user.name + ' role is : ' + user.role,
                   username: 'mafia-bot'
@@ -143,11 +143,14 @@ new Promise(function (resolve, reject) {
                   username: 'mafia-bot'
                 }, function (err, response) { });
               }).then(function () {
-                convo.say('Roles have been assigned and sent to all users');
-                console.log('here are your roles assigned to members' + JSON.stringify(users));
+                //TODO has to execute at the end of synchronous each loop.
+                /*if(index === (users.length-1)){
+                      convo.say('Roles have been assigned and sent to all users');
+                      console.log('here are your roles assigned to members' + JSON.stringify(users));
+                }*/
               }, function (err) {
-                  console.log(err);
-                });
+                console.log(err);
+              });
             });
           }
         }
@@ -157,5 +160,5 @@ new Promise(function (resolve, reject) {
     bot.startConversation(message, askRoles);
   });
 }, function rejected(error) {
-    console.log(error);
-  });
+  console.log(error);
+});
