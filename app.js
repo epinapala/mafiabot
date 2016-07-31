@@ -67,8 +67,8 @@ controller.hears([COMMAND_DELIMITER + "init_channel"], ["direct_message", "direc
 });
 
 controller.hears([COMMAND_DELIMITER + "init"], ["direct_message", "direct_mention", "mention", "ambient"], function (bot, message) {
-  bot.api.groups.list({ group: message.channel }, function (err, response) {
-    var current_group_id = message.channel;
+  bot.api.groups.list({ group: 'G1WNZGC76' }, function (err, response) {
+    var current_group_id = 'G1WNZGC76';
     if (err) {
       bot.reply(message, "Unable to extract Group info : " + current_group_id);
     } else {
@@ -138,7 +138,8 @@ controller.hears([COMMAND_DELIMITER + "start"], ["direct_message", "direct_menti
       if (err) {
         convo.say('Oh no! Not able to read users list!')
       } else {
-        if (roles.length !== all_user_data.length) {
+		  console.log(all_user_data.length);
+        if (roles.length !== (all_user_data.length)) {
           convo.say("Number of roles doesnt match the number of users in this channel. Retry with !start command");
         } else {
           var users = _.map(all_user_data, function (currentObject) {
