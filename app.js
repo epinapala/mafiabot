@@ -1,17 +1,21 @@
+var controller, bot;
+var users = [];
 var Botkit = require('botkit');
 var _ = require('underscore');
-var COMMAND_DELIMITER = '!';
-var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
-var users = [];
-var util = require('./util');
 var _Promise = require('bluebird');
 var rmdir = require('rimraf');
+
+var util = require('./util');
+var botService = require('services/bot_service');
+
 var minimist = require('minimist');
-var controller, bot;
 var storage_directory = minimist(process.argv.slice(2)).s || './storage';
 var token = minimist(process.argv.slice(2)).t;
 var organizer = minimist(process.argv.slice(2)).o;
 var current_group_id = minimist(process.argv.slice(2)).g;
+
+var COMMAND_DELIMITER = '!';
+var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
 
 
 function getUserName(user) {
