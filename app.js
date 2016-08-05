@@ -3,7 +3,7 @@ var _ = require('underscore');
 var COMMAND_DELIMITER = '!';
 var users = [];
 var util = require('./util');
-var Promise = require('bluebird');
+var _Promise = require('bluebird');
 var rmdir = require('rimraf');
 var minimist = require('minimist');
 var controller, bot;
@@ -12,18 +12,27 @@ var token = minimist(process.argv.slice(2)).t;
 var organizer = minimist(process.argv.slice(2)).o;
 var current_group_id = minimist(process.argv.slice(2)).g;
 
-new Promise(function (resolve, reject) {
+
+function reflect(promise) {
+  return promise.then(function (v) { return { v: v, status: "resolved" } },
+    function (e) { return { e: e, status: "rejected" } });
+}
+
+new _Promise(function (resolve, reject) {
   rmdir(storage_directory, function (error) {
     if (error) {
       reject(error);
-    }
-    else {
+    } else {
       resolve();
     }
   });
 }).then(function () {
-  controller = Botkit.slackbot({ json_file_store: storage_directory });
-  bot = controller.spawn({ token: token });
+  controller = Botkit.slackbot({
+    json_file_store: storage_directory
+  });
+  bot = controller.spawn({
+    token: token
+  });
   bot.startRTM(function (err, bot, payload) {
     if (err) {
       throw new Error('Darn! Could not connect to slack!' + JSON.stringify(err));
@@ -32,11 +41,12 @@ new Promise(function (resolve, reject) {
 }).then(function () {
   controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message', 'direct_mention', 'mention', 'ambient'], function (bot,
     message) {
-    bot.api.groups.list({ group: current_group_id }, function (err, response) {
+    bot.api.groups.list({
+      group: current_group_id
+    }, function (err, response) {
       if (err) {
         bot.reply(message, 'Unable to extract Group info : ' + current_group_id);
-      }
-      else {
+      } else {
         var groups = response.groups;
         if (groups) {
           var group = _.find(groups, function (object) {
@@ -46,25 +56,23 @@ new Promise(function (resolve, reject) {
             bot.reply(message, 'Group name is : ' + group.name);
             var users = group.members || [];
             _.each(users, function (id) {
-              bot.api.users.info({ user: id }, function (err, user_data) {
+              bot.api.users.info({
+                user: id
+              }, function (err, user_data) {
                 var user = user_data.user;
                 if (user.is_bot) {
                   console.log('Bot User, Skipping!');
-                }
-                else if (user.id === organizer) {
+                } else if (user.id === organizer) {
                   console.log('Organier ' + user.name + ', Skipping!');
-                }
-                else {
+                } else {
                   if (err) {
                     bot.reply(message, 'Unable to find user : ' + id);
-                  }
-                  else {
+                  } else {
                     bot.reply(message, user.name);
                     controller.storage.users.save(user, function (err) {
                       if (err) {
                         console.log('Unable to save user : ' + user.name);
-                      }
-                      else {
+                      } else {
                         console.log('Saved user : ' + user.name);
                       }
                     });
@@ -72,12 +80,10 @@ new Promise(function (resolve, reject) {
                 }
               });
             });
-          }
-          else {
+          } else {
             bot.reply(message, 'unable get group info from slack!');
           }
-        }
-        else {
+        } else {
           bot.reply(message, 'No channels group from slack :(');
         }
       }
@@ -104,54 +110,69 @@ new Promise(function (resolve, reject) {
       controller.storage.users.all(function (err, all_user_data) {
         if (err) {
           convo.say('Oh no! Not able to read users list!');
-        }
-        else {
+        } else {
           if (roles.length !== (all_user_data.length)) {
             convo.say('Number of roles[' + roles.length + '] doesnt match the number of users[' +
               all_user_data.length + '] in this channel. Retry with !start command');
-          }
-          else {
+          } else {
             var users = _.map(all_user_data, function (currentObject) {
               return _.pick(currentObject, 'name', 'id');
             });
             var shuffledUsers = util.fisherYatesShuffle(users);
             var shuffledRoles = util.fisherYatesShuffle(roles);
+            var promises = [];
+
+            //Loop through shuffled users to fill roles and send messages
             _.each(shuffledUsers, function (user, index) {
               user.role = shuffledRoles[index];
-
-              new Promise(function (resolve, reject) {
+              var promise_user = new _Promise(function (resolve, reject) {
                 bot.api.chat.postMessage({
-                  channel: user.id, text: 'Hi there! Your role is : ' +
-                  user.role, username: 'mafia-bot'
+                  channel: user.id,
+                  text: 'Hi there! Your role is : ' +
+                  user.role,
+                  username: 'mafia-bot'
                 }, function (err, response) {
                   if (err) {
                     reject('Unable to reveal role to user : ' + user.name + '. Error : ' + err);
-                  }
-                  {
-                    console.log('Revealed role to user : ' + user.name + ' : ' + user.role + ' via DM');
-                    resolve(user);
+                  } {
+                    resolve('Revealed role to user : ' + user.name + ' : ' + user.role + ' via DM');
                   }
                 });
-              }).then(function resolved(user) {
-                bot.api.chat.postMessage({
-                  channel: organizer, text: user.name + ' role is : ' + user.role,
-                  username: 'mafia-bot'
-                }, function (err, response) { });
-              }).then(function () {
-                bot.api.chat.postMessage({
-                  channel: organizer, text: '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-',
-                  username: 'mafia-bot'
-                }, function (err, response) { });
-              }).then(function () {
-                //TODO has to execute at the end of synchronous each loop.
-                /*if(index === (users.length-1)){
-                      convo.say('Roles have been assigned and sent to all users');
-                      console.log('here are your roles assigned to members' + JSON.stringify(users));
-                }*/
-              }, function (err) {
-                console.log(err);
               });
+              var promise_organizer = new _Promise(function (resolve, reject) {
+                bot.api.chat.postMessage({
+                  channel: organizer,
+                  text: user.name + ' role is : ' + user.role,
+                  username: 'mafia-bot'
+                }, function (err, response) {
+                  if (err) {
+                    reject('Unable to reveal user\'s role to organizer : ' + user.name + '. Error : ' + err);
+                  } else {
+                    resolve("Sent user : " + user.name + "'s role to organizer");
+                  }
+                });
+              });
+              promises.push(promise_user);
+              promises.push(promise_organizer);
+              console.log(index);
             });
+
+            var promiseResults = _Promise.all(
+              promises.map(
+                function (promise) {
+                  return promise.reflect();
+                }
+              )
+            );
+
+            promiseResults.each(function (inspection) {
+              if (inspection.isFulfilled()) {
+                console.log("Fulfilled Promise - ", inspection.value());
+              } else {
+                console.error("Rejected Promise -", inspection.reason());
+              }
+            });
+            
           }
         }
       });
@@ -159,6 +180,7 @@ new Promise(function (resolve, reject) {
 
     bot.startConversation(message, askRoles);
   });
-}, function rejected(error) {
-  console.log(error);
-});
+},
+  function rejected(error) {
+    console.log(error);
+  });
