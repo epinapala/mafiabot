@@ -1,6 +1,7 @@
 var Botkit = require('botkit');
 var _ = require('underscore');
 var COMMAND_DELIMITER = '!';
+var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
 var users = [];
 var util = require('./util');
 var _Promise = require('bluebird');
@@ -164,20 +165,24 @@ new _Promise(function (resolve, reject) {
                 }
               )
             );
-
             promiseResults.each(function (inspection) {
               if (inspection.isFulfilled()) {
                 console.log("Fulfilled Promise - ", inspection.value());
               } else {
-                console.error("Rejected Promise -", inspection.reason());
+                console.error("Rejected Promise - ", inspection.reason());
               }
+            }).then(function () {
+              bot.api.chat.postMessage({
+                channel: organizer, text: MESSAGE_SEPERATOR,
+                username: 'mafia-bot'
+              }, function (err, response) { });
             });
-            
+            console.log('here are your roles assigned to members' + JSON.stringify(users));
           }
         }
       });
     };
-
+    //initialize conversation with the organizer
     bot.startConversation(message, askRoles);
   });
 },
