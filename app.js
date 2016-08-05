@@ -40,7 +40,7 @@ new _Promise(function (resolve, reject) {
     }
   });
 }).then(function () {
-  controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message', 'direct_mention', 'mention', 'ambient'], function (bot,
+  controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message'], function (bot,
     message) {
     bot.api.groups.list({
       group: current_group_id
@@ -90,7 +90,7 @@ new _Promise(function (resolve, reject) {
       }
     });
   });
-  controller.hears([COMMAND_DELIMITER + 'start'], ['direct_message', 'direct_mention', 'mention', 'ambient'], function (bot, message) {
+  controller.hears([COMMAND_DELIMITER + 'start'], ['direct_message'], function (bot, message) {
     askRoles = function (response, convo) {
       convo.ask('What roles are you planning to assign? Please specify comma seperated!', function (response, convo) {
         parseRoles(response, convo);
@@ -141,17 +141,9 @@ new _Promise(function (resolve, reject) {
                 });
               });
               var promise_organizer = new _Promise(function (resolve, reject) {
-                bot.api.chat.postMessage({
-                  channel: organizer,
-                  text: user.name + ' role is : ' + user.role,
-                  username: 'mafia-bot'
-                }, function (err, response) {
-                  if (err) {
-                    reject('Unable to reveal user\'s role to organizer : ' + user.name + '. Error : ' + err);
-                  } else {
-                    resolve("Sent user : " + user.name + "'s role to organizer");
-                  }
-                });
+                var privateMessage = user.name + '\'s role is : ' + user.role;
+                convo.say(privateMessage);
+                resolve(privateMessage);
               });
               promises.push(promise_user);
               promises.push(promise_organizer);
@@ -172,10 +164,7 @@ new _Promise(function (resolve, reject) {
                 console.error("Rejected Promise - ", inspection.reason());
               }
             }).then(function () {
-              bot.api.chat.postMessage({
-                channel: organizer, text: MESSAGE_SEPERATOR,
-                username: 'mafia-bot'
-              }, function (err, response) { });
+              convo.say(MESSAGE_SEPERATOR);
             });
             console.log('here are your roles assigned to members' + JSON.stringify(users));
           }
