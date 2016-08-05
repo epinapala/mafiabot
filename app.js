@@ -14,9 +14,14 @@ var organizer = minimist(process.argv.slice(2)).o;
 var current_group_id = minimist(process.argv.slice(2)).g;
 
 
-function reflect(promise) {
-  return promise.then(function (v) { return { v: v, status: "resolved" } },
-    function (e) { return { e: e, status: "rejected" } });
+function getUserName(user) {
+  if (user.profile && user.profile.first_name) {
+    return user.profile.first_name.trim();
+  } else if (user.name) {
+    return user.name;
+  } else {
+    return user.id;
+  }
 }
 
 new _Promise(function (resolve, reject) {
@@ -61,20 +66,21 @@ new _Promise(function (resolve, reject) {
                 user: id
               }, function (err, user_data) {
                 var user = user_data.user;
+                user.preferred_name = getUserName(user);
                 if (user.is_bot) {
                   console.log('Bot User, Skipping!');
                 } else if (user.id === organizer) {
-                  console.log('Organier ' + user.name + ', Skipping!');
+                  console.log('Organizer ' + user.preferred_name + ', Skipping!');
                 } else {
                   if (err) {
                     bot.reply(message, 'Unable to find user : ' + id);
                   } else {
-                    bot.reply(message, user.name);
+                    bot.reply(message, user.preferred_name);
                     controller.storage.users.save(user, function (err) {
                       if (err) {
-                        console.log('Unable to save user : ' + user.name);
+                        console.log('Unable to save user : ' + user.preferred_name);
                       } else {
-                        console.log('Saved user : ' + user.name);
+                        console.log('Saved user : ' + user.preferred_name);
                       }
                     });
                   }
@@ -117,7 +123,7 @@ new _Promise(function (resolve, reject) {
               all_user_data.length + '] in this channel. Retry with !start command');
           } else {
             var users = _.map(all_user_data, function (currentObject) {
-              return _.pick(currentObject, 'name', 'id');
+              return _.pick(currentObject, 'name', 'id', 'preferred_name');
             });
             var shuffledUsers = util.fisherYatesShuffle(users);
             var shuffledRoles = util.fisherYatesShuffle(roles);
@@ -129,25 +135,24 @@ new _Promise(function (resolve, reject) {
               var promise_user = new _Promise(function (resolve, reject) {
                 bot.api.chat.postMessage({
                   channel: user.id,
-                  text: 'Hi there! Your role is : ' +
-                  user.role,
-                  username: 'mafia-bot'
+                  text: 'Hi there ' + user.preferred_name + '! Your role is : ' + user.role,
+                  username: 'mafia-bot',
+                  as_user: true
                 }, function (err, response) {
                   if (err) {
-                    reject('Unable to reveal role to user : ' + user.name + '. Error : ' + err);
+                    reject('Unable to reveal role to user : ' + user.preferred_name + '. Error : ' + err);
                   } {
-                    resolve('Revealed role to user : ' + user.name + ' : ' + user.role + ' via DM');
+                    resolve('Revealed role to user : ' + user.preferred_name + ' : ' + user.role + ' via DM');
                   }
                 });
               });
               var promise_organizer = new _Promise(function (resolve, reject) {
-                var privateMessage = user.name + '\'s role is : ' + user.role;
+                var privateMessage = user.preferred_name + '\'s role is : ' + user.role;
                 convo.say(privateMessage);
                 resolve(privateMessage);
               });
               promises.push(promise_user);
               promises.push(promise_organizer);
-              console.log(index);
             });
 
             var promiseResults = _Promise.all(
@@ -166,7 +171,7 @@ new _Promise(function (resolve, reject) {
             }).then(function () {
               convo.say(MESSAGE_SEPERATOR);
             });
-            console.log('here are your roles assigned to members' + JSON.stringify(users));
+            console.log('Here is a summary of all users and their roles : ' + JSON.stringify(users));
           }
         }
       });
