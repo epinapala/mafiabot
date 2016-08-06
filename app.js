@@ -48,11 +48,9 @@ new _Promise(function (resolve, reject) {
     }
   });
 }).then(function () {
-  controller.hears('test', 'direct_message', function (bot, message) {
-    
+  /*controller.hears('hello', 'direct_message', function (bot, message) {
     bot.reply(message,'Hello yourself.');
-
-  });
+  });*/
   controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message'], function (bot,
     message) {
     bot.api.groups.list({
