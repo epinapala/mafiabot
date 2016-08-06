@@ -1,3 +1,6 @@
-node_modules
+*.swp
+.DS_Store
+node_modules/
 storage
 .vscode
+npm-debug.log

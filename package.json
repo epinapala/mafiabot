@@ -1,31 +1,38 @@
 {
   "name": "mafiabot",
   "version": "1.0.0",
-  "description": "A simple bot to help the Mafia Organizer",
+  "description": "A simple slackbot to help the mafia game organizer. The bot uses botkit, which inturn uses slack RTM api to communicate with slack.",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_modules/.bin/grunt ci"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/epinapala/mafiabot.git"
+    "url": "https://github.com/epinapala/mafiabot"
   },
-  "keywords": [
-    "mafia",
-    "slackbot",
-    "slackmafia"
-  ],
-  "author": "Rajesh Pinapala",
-  "license": "ISC",
+  "keywords": ["mafia","warewolf","slack mafia","slackmafia","slackwarewolf"],
+  "author": "epinapala <epinapala@live.com>",
+  "license": "GPL-3.0",
+  "homepage": "https://github.com/epinapala/mafiabot#readme",
   "bugs": {
     "url": "https://github.com/epinapala/mafiabot/issues"
   },
-  "homepage": "https://github.com/epinapala/mafiabot#readme",
   "dependencies": {
     "bluebird": "^3.4.1",
     "botkit": "^0.2.2",
     "minimist": "^1.2.0",
     "rimraf": "^2.5.4",
     "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "chai": "^3.4.1",
+    "botkit-mock": "amplicity/BotMock",
+    "grunt-contrib-jshint": "^0.11.3",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt": "^0.4.5",
+    "grunt-mocha-cli": "^2.0.0",
+
+    "grunt-complexity": "^0.3.0",
+    "grunt-cli": "^0.1.13"
   }
 }
