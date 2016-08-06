@@ -6,7 +6,6 @@ var _Promise = require('bluebird');
 var rmdir = require('rimraf');
 
 var util = require('./util');
-var botService = require('services/bot_service');
 
 var minimist = require('minimist');
 var storage_directory = minimist(process.argv.slice(2)).s || './storage';
@@ -49,6 +48,11 @@ new _Promise(function (resolve, reject) {
     }
   });
 }).then(function () {
+  controller.hears('test', 'direct_message', function (bot, message) {
+    
+    bot.reply(message,'Hello yourself.');
+
+  });
   controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message'], function (bot,
     message) {
     bot.api.groups.list({
