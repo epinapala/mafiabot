@@ -1,3 +1,7 @@
+/*jshint esnext : true*/
+
+var shuffle = require('shuffle-array');
+
 function formatUptime(uptime) {
     var unit = 'second';
     if (uptime > 60) {
@@ -38,5 +42,6 @@ function fisherYatesShuffle(array) {
 
 module.exports = {
     fisherYatesShuffle: fisherYatesShuffle,
+	shuffle : shuffle,//use shuffle-array module's shuffle for now.
     formatUptime: formatUptime
 };

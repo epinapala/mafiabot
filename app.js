@@ -131,8 +131,8 @@ new _Promise(function (resolve, reject) {
             var users = _.map(all_user_data, function (currentObject) {
               return _.pick(currentObject, 'name', 'id', 'preferred_name');
             });
-            var shuffledUsers = util.fisherYatesShuffle(users);
-            var shuffledRoles = util.fisherYatesShuffle(roles);
+            var shuffledUsers = util.shuffle(users);
+            var shuffledRoles = util.shuffle(roles);
             var promises = [];
 
             //Loop through shuffled users to fill roles and send messages
