@@ -98,9 +98,9 @@ new _Promise(function (resolve, reject) {
                 var user = user_data.user;
                 user.preferred_name = getUserName(user);
                 if (user.is_bot) {
-                  console.log('Bot User ['+ user.name +'], Skipping!');
+                  console.log('Bot User [' + user.name + '], Skipping!');
                 } else if (user.id === organizer_id) {
-                  console.log('Organizer ['+ user.preferred_name +'] , Skipping!');
+                  console.log('Organizer [' + user.preferred_name + '] , Skipping!');
                 } else {
                   if (err) {
                     bot.reply(message, 'Unable to find user : ' + id);
@@ -147,6 +147,9 @@ new _Promise(function (resolve, reject) {
 
     matchRoles = function (roles, convo) {
       controller.storage.users.all(function (err, all_user_data) {
+        all_user_data = _.without(all_user_data, _.findWhere(all_user_data, {
+          id: organizer_id
+        }));
         if (err) {
           convo.say('Oh no! Not able to read users list!');
         } else {
@@ -154,6 +157,8 @@ new _Promise(function (resolve, reject) {
             convo.say('Number of roles[' + roles.length + '] doesnt match the number of users[' +
               all_user_data.length + '] in this channel. Retry with !start command');
           } else {
+
+            //Filter organizer jsut in case.
             var users = _.map(all_user_data, function (currentObject) {
               return _.pick(currentObject, 'name', 'id', 'preferred_name');
             });
