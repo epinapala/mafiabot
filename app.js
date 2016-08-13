@@ -128,7 +128,7 @@ new _Promise(function (resolve, reject) {
   /* Implementation for start command */
   controller.hears([COMMAND_DELIMITER + 'start'], ['direct_message'], function (bot, message) {
     askRoles = function (response, convo) {
-      convo.ask('What roles are you planning to assign? Please specify comma seperate. For specifying a role preference use colon. Ex: Role1, Role2:@username, Role3.', function (response, convo) {
+      convo.ask('What roles are you planning to assign? Please specify comma seperate. For specifying a role preference use colon and mention. Ex: Role1, Role2: @username, Role3.', function (response, convo) {
         parseRoles(response, convo);
         convo.next();
       });
