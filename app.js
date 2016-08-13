@@ -1,5 +1,5 @@
+/** jshint esnext: true */
 var controller, bot;
-var users = [];
 var Botkit = require('botkit');
 var _ = require('underscore');
 var _Promise = require('bluebird');
@@ -10,7 +10,7 @@ var util = require('./util');
 var minimist = require('minimist');
 var storage_directory = minimist(process.argv.slice(2)).s || './storage';
 var token = minimist(process.argv.slice(2)).t;
-var organizer = minimist(process.argv.slice(2)).o;
+var organizer_id = minimist(process.argv.slice(2)).o;
 var current_group_id = minimist(process.argv.slice(2)).g;
 
 var COMMAND_DELIMITER = '!';
@@ -28,44 +28,68 @@ function getUserName(user) {
 }
 
 new _Promise(function (resolve, reject) {
-  rmdir(storage_directory, function (error) {
+  //Clear storage directory
+  rmdir(storage_directory + '/users', function (error) {
     if (error) {
+      bot.reply(message, 'Unable to initialize Game, Error : ' + err);
       reject(error);
     } else {
-      resolve();
+      controller = Botkit.slackbot({
+        json_file_store: storage_directory
+      });
+      bot = controller.spawn({
+        token: token
+      });
+      bot.startRTM(function (err, bot, payload) {
+        if (err) {
+          throw new Error('Darn! Could not connect to slack!' + JSON.stringify(err));
+        } else {
+          resolve();
+        }
+      });
     }
   });
 }).then(function () {
-  controller = Botkit.slackbot({
-    json_file_store: storage_directory
-  });
-  bot = controller.spawn({
-    token: token
-  });
-  bot.startRTM(function (err, bot, payload) {
-    if (err) {
-      throw new Error('Darn! Could not connect to slack!' + JSON.stringify(err));
-    }
-  });
-}).then(function () {
-  /*controller.hears('hello', 'direct_message', function (bot, message) {
-    bot.reply(message,'Hello yourself.');
-  });*/
+  /** Implement all commands in this step. */
+
+  /* Implementation for init command */
   controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message'], function (bot,
     message) {
-    bot.api.groups.list({
-      group: current_group_id
-    }, function (err, response) {
-      if (err) {
-        bot.reply(message, 'Unable to extract Group info : ' + current_group_id);
-      } else {
-        var groups = response.groups;
+
+
+    new _Promise(function (resolve, reject) {
+      //Set the user currently intiializing the game as organizer.
+      if (message.user) {
+        organizer_id = message.user;
+        resolve();
+      }
+    }).then(function () {
+      /** Populate all users in local json storage */
+      //Pull all groups.
+      new _Promise(function (resolve, reject) {
+        bot.api.groups.list({
+          group: current_group_id
+        }, function (err, response) {
+          if (err) {
+            var err_msg = 'Unable to extract Group info : ' + current_group_id;
+            bot.reply(message, err_msg);
+            reject(err_msg);
+          } else {
+            resolve(response.groups);
+          }
+        });
+      }).then(function (groups) {
         if (groups) {
+          //Filter and get group by group ID
           var group = _.find(groups, function (object) {
             return object.id === current_group_id;
           });
+
           if (group) {
+            //If group is found. shout out group name.
             bot.reply(message, 'Group name is : ' + group.name);
+
+            //Get all users from group and iterate.
             var users = group.members || [];
             _.each(users, function (id) {
               bot.api.users.info({
@@ -74,9 +98,9 @@ new _Promise(function (resolve, reject) {
                 var user = user_data.user;
                 user.preferred_name = getUserName(user);
                 if (user.is_bot) {
-                  console.log('Bot User, Skipping!');
-                } else if (user.id === organizer) {
-                  console.log('Organizer ' + user.preferred_name + ', Skipping!');
+                  console.log('Bot User ['+ user.name +'], Skipping!');
+                } else if (user.id === organizer_id) {
+                  console.log('Organizer ['+ user.preferred_name +'] , Skipping!');
                 } else {
                   if (err) {
                     bot.reply(message, 'Unable to find user : ' + id);
@@ -99,9 +123,11 @@ new _Promise(function (resolve, reject) {
         } else {
           bot.reply(message, 'No channels group from slack :(');
         }
-      }
+      });
     });
   });
+
+  /* Implementation for start command */
   controller.hears([COMMAND_DELIMITER + 'start'], ['direct_message'], function (bot, message) {
     askRoles = function (response, convo) {
       convo.ask('What roles are you planning to assign? Please specify comma seperated!', function (response, convo) {
@@ -186,6 +212,7 @@ new _Promise(function (resolve, reject) {
     bot.startConversation(message, askRoles);
   });
 },
+  /** Handle the final common rejection here. */
   function rejected(error) {
     console.log(error);
   });
