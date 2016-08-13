@@ -55,8 +55,6 @@ new _Promise(function (resolve, reject) {
   /* Implementation for init command */
   controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message'], function (bot,
     message) {
-
-
     new _Promise(function (resolve, reject) {
       //Set the user currently intiializing the game as organizer.
       if (message.user) {
@@ -130,22 +128,37 @@ new _Promise(function (resolve, reject) {
   /* Implementation for start command */
   controller.hears([COMMAND_DELIMITER + 'start'], ['direct_message'], function (bot, message) {
     askRoles = function (response, convo) {
-      convo.ask('What roles are you planning to assign? Please specify comma seperated!', function (response, convo) {
+      convo.ask('What roles are you planning to assign? Please specify comma seperate. For specifying a role preference use colon. Ex: Role1, Role2:@username, Role3.', function (response, convo) {
         parseRoles(response, convo);
         convo.next();
       });
     };
 
     parseRoles = function (response, convo) {
+      var role_pref = {};
       var roles = response.text // extract actual message
         .split(',') // split by comma
         .map( // trim each role
         Function.prototype.call, String.prototype.trim);
-      matchRoles(roles, convo);
+      for (var i = 0; i < roles.length; i++) {
+        if (roles[i].indexOf(':') > -1) {
+          var rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
+          var cur_role = rolePlayerArr[0];
+          var requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
+          //roles[i] = cur_role;
+          delete roles[i];//remove he role as we will assign this to requested user anyways.
+          role_pref[requested_player_id] = cur_role;
+        }
+      }
+      matchRoles({
+        roles: roles,
+        role_pref: role_pref
+      }, convo);
       convo.next();
     };
 
-    matchRoles = function (roles, convo) {
+    matchRoles = function (roles_meta, convo) {
+      var roles = roles_meta.roles;
       controller.storage.users.all(function (err, all_user_data) {
         all_user_data = _.without(all_user_data, _.findWhere(all_user_data, {
           id: organizer_id
@@ -168,7 +181,15 @@ new _Promise(function (resolve, reject) {
 
             //Loop through shuffled users to fill roles and send messages
             _.each(shuffledUsers, function (user, index) {
-              user.role = shuffledRoles[index];
+              var user_id = user.id;
+              var preferred_role = roles_meta.role_pref[user_id];
+              if (preferred_role) {
+                console.log('Assigning role[' + preferred_role + '] to user ' + user.preferred_name);
+                user.role = preferred_role;
+              } else {
+                user.role = shuffledRoles[index];
+              }
+
               var promise_user = new _Promise(function (resolve, reject) {
                 bot.api.chat.postMessage({
                   channel: user.id,
