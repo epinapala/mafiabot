@@ -145,8 +145,8 @@ new _Promise(function (resolve, reject) {
           var rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
           var cur_role = rolePlayerArr[0];
           var requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
-          //roles[i] = cur_role;
-          delete roles[i];//remove he role as we will assign this to requested user anyways.
+          roles[i] = cur_role;
+          //delete roles[i];//remove he role as we will assign this to requested user anyways.
           role_pref[requested_player_id] = cur_role;
         }
       }
