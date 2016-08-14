@@ -145,13 +145,12 @@ new _Promise(function (resolve, reject) {
           var rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
           var cur_role = rolePlayerArr[0];
           var requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
-          roles[i] = cur_role;
-          //delete roles[i];//remove he role as we will assign this to requested user anyways.
+          roles[i] = 'removed';
           role_pref[requested_player_id] = cur_role;
         }
       }
       matchRoles({
-        roles: roles,
+        roles: _.without(roles, "removed"),
         role_pref: role_pref
       }, convo);
       convo.next();
@@ -159,6 +158,9 @@ new _Promise(function (resolve, reject) {
 
     matchRoles = function (roles_meta, convo) {
       var roles = roles_meta.roles;
+      var roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
+      var promises = [];
+
       controller.storage.users.all(function (err, all_user_data) {
         all_user_data = _.without(all_user_data, _.findWhere(all_user_data, {
           id: organizer_id
@@ -166,73 +168,67 @@ new _Promise(function (resolve, reject) {
         if (err) {
           convo.say('Oh no! Not able to read users list!');
         } else {
-          if (roles.length !== (all_user_data.length)) {
-            convo.say('Number of roles[' + roles.length + '] doesnt match the number of users[' +
+          if (roleCount !== (all_user_data.length)) {
+            convo.say('Number of roles[' + roleCount + '] doesnt match the number of users[' +
               all_user_data.length + '] in this channel. Retry with !start command');
           } else {
 
-            //Filter organizer jsut in case.
             var users = _.map(all_user_data, function (currentObject) {
               return _.pick(currentObject, 'name', 'id', 'preferred_name');
             });
-            var shuffledUsers = util.shuffle(users);
-            var shuffledRoles = util.shuffle(roles);
-            var promises = [];
 
-            //Loop through shuffled users to fill roles and send messages
-            _.each(shuffledUsers, function (user, index) {
-              var user_id = user.id;
-              var preferred_role = roles_meta.role_pref[user_id];
-              if (preferred_role) {
-                console.log('Assigning role[' + preferred_role + '] to user ' + user.preferred_name);
-                user.role = preferred_role;
-              } else {
-                user.role = shuffledRoles[index];
+            var roles_pref_obj = roles_meta.role_pref;
+            var user_ids = Object.keys(roles_pref_obj);
+
+            for (var j = 0; j < users.length; j++) {
+              var _user = users[j];
+              if (roles_pref_obj[_user.id]) {
+                _user.role = roles_pref_obj[_user.id];
+                promises.push(getUserPromise(_user));
+                promises.push(getOrganizerPromise(_user, convo));
+                users.splice(j, 1);
               }
-
-              var promise_user = new _Promise(function (resolve, reject) {
-                bot.api.chat.postMessage({
-                  channel: user.id,
-                  text: 'Hi there ' + user.preferred_name + '! Your role is : ' + user.role,
-                  username: 'mafia-bot',
-                  as_user: true
-                }, function (err, response) {
-                  if (err) {
-                    reject('Unable to reveal role to user : ' + user.preferred_name + '. Error : ' + err);
-                  } {
-                    resolve('Revealed role to user : ' + user.preferred_name + ' : ' + user.role + ' via DM');
-                  }
-                });
-              });
-              var promise_organizer = new _Promise(function (resolve, reject) {
-                var privateMessage = user.preferred_name + '\'s role is : ' + user.role;
-                convo.say(privateMessage);
-                resolve(privateMessage);
-              });
-              promises.push(promise_user);
-              promises.push(promise_organizer);
-            });
-
-            var promiseResults = _Promise.all(
-              promises.map(
-                function (promise) {
-                  return promise.reflect();
-                }
-              )
-            );
-            promiseResults.each(function (inspection) {
-              if (inspection.isFulfilled()) {
-                console.log("Fulfilled Promise - ", inspection.value());
-              } else {
-                console.error("Rejected Promise - ", inspection.reason());
-              }
-            }).then(function () {
-              convo.say(MESSAGE_SEPERATOR);
-            });
-            console.log('Here is a summary of all users and their roles : ' + JSON.stringify(users));
+            }
+            lastStep(users, roles, promises, convo, roles_meta);
+            convo.next();
           }
         }
       });
+    };
+
+    lastStep = function (users, roles, promises, convo, roles_meta) {
+
+      var shuffledUsers = util.shuffle(users);
+      var shuffledRoles = util.shuffle(roles);
+
+      //Loop through shuffled users to fill roles and send messages
+      _.each(shuffledUsers, function (user, index) {
+        var user_id = user.id;
+        var preferred_role = roles_meta.role_pref[user_id];
+        if (!preferred_role) {
+          user.role = shuffledRoles[index];
+          promises.push(getUserPromise(user));
+          promises.push(getOrganizerPromise(user, convo));
+        }
+      });
+
+      var promiseResults = _Promise.all(
+        promises.map(
+          function (promise) {
+            return promise.reflect();
+          }
+        )
+      );
+      promiseResults.each(function (inspection) {
+        if (inspection.isFulfilled()) {
+          console.log("Fulfilled Promise - ", inspection.value());
+        } else {
+          console.error("Rejected Promise - ", inspection.reason());
+        }
+      }).then(function () {
+        convo.say(MESSAGE_SEPERATOR);
+      });
+      console.log('Here is a summary of all users and their roles : ' + JSON.stringify(users));
     };
     //initialize conversation with the organizer
     bot.startConversation(message, askRoles);
@@ -242,3 +238,28 @@ new _Promise(function (resolve, reject) {
   function rejected(error) {
     console.log(error);
   });
+
+function getUserPromise(user) {
+  return new _Promise(function (resolve, reject) {
+    bot.api.chat.postMessage({
+      channel: user.id,
+      text: 'Hi there ' + user.preferred_name + '! Your role is : ' + user.role,
+      username: 'mafia-bot',
+      as_user: true
+    }, function (err, response) {
+      if (err) {
+        reject('Unable to reveal role to user : ' + user.preferred_name + '. Error : ' + err);
+      } {
+        resolve('Revealed role to user : ' + user.preferred_name + ' : ' + user.role + ' via DM');
+      }
+    });
+  });
+}
+
+function getOrganizerPromise(user, convo) {
+  return new _Promise(function (resolve, reject) {
+    var privateMessage = user.preferred_name + '\'s role is : ' + user.role;
+    convo.say(privateMessage);
+    resolve(privateMessage);
+  });
+}
