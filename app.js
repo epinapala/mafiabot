@@ -5,7 +5,8 @@ var _ = require('underscore');
 var _Promise = require('bluebird');
 var rmdir = require('rimraf');
 
-var util = require('./util');
+var util = require('./utils/helper');
+var globalUtil = require('./utils/global');
 
 var minimist = require('minimist');
 var storage_directory = minimist(process.argv.slice(2)).s || './storage';
@@ -19,10 +20,11 @@ var slackCommSvc = require('./services/slack-communication-service');
 
 var COMMAND_DELIMITER = '!';
 var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
+var ROLE_REMOVED_KEY = 'removed';
 
 
-if(is_debug){
-  slackCommSvc.setIsDebug(is_debug);
+if (is_debug) {
+  globalUtil.setIsDebugMode(is_debug);
 }
 
 function getUserName(user) {
@@ -153,18 +155,18 @@ new _Promise(function (resolve, reject) {
           var rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
           var cur_role = rolePlayerArr[0];
           var requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
-          roles[i] = 'removed';
+          roles[i] = ROLE_REMOVED_KEY;
           role_pref[requested_player_id] = cur_role;
         }
       }
-      matchRoles({
-        roles: _.without(roles, "removed"),
+      matchRolesForPreferenceUsers({
+        roles: _.without(roles, ROLE_REMOVED_KEY),
         role_pref: role_pref
       }, convo);
       convo.next();
     };
 
-    matchRoles = function (roles_meta, convo) {
+    matchRolesForPreferenceUsers = function (roles_meta, convo) {
       var roles = roles_meta.roles;
       var roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
       var promises = [];
@@ -187,6 +189,7 @@ new _Promise(function (resolve, reject) {
 
             var roles_pref_obj = roles_meta.role_pref;
             var user_ids = Object.keys(roles_pref_obj);
+            var users_to_process = [];
 
             for (var j = 0; j < users.length; j++) {
               var _user = users[j];
@@ -194,26 +197,25 @@ new _Promise(function (resolve, reject) {
                 _user.role = roles_pref_obj[_user.id];
                 promises.push(slackCommSvc.messageUser(_user));
                 promises.push(slackCommSvc.messageOrganizer(_user, convo));
-                users.splice(j, 1);
+              } else {
+                users_to_process.push(_user);
               }
             }
-            lastStep(users, roles, promises, convo, roles_meta);
+            matchRolesForNonPreferenceUsers(users_to_process, roles, promises, convo, roles_meta);
             convo.next();
           }
         }
       });
     };
 
-    lastStep = function (users, roles, promises, convo, roles_meta) {
-
+    matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {
       var shuffledUsers = util.shuffle(users);
       var shuffledRoles = util.shuffle(roles);
 
       //Loop through shuffled users to fill roles and send messages
       _.each(shuffledUsers, function (user, index) {
         var user_id = user.id;
-        var preferred_role = roles_meta.role_pref[user_id];
-        if (!preferred_role) {
+        if (!user.is_processed) {
           user.role = shuffledRoles[index];
           promises.push(slackCommSvc.messageUser(user));
           promises.push(slackCommSvc.messageOrganizer(user, convo));

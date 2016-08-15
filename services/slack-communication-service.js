@@ -1,9 +1,11 @@
 /** jshint esnext: true */
-var _Promise =  require('bluebird');
+
+var globalUtil = require('../utils/global');
+var _Promise = require('bluebird');
 var isDebug = false;
 
 function messageUser(user) {
-    if (isDebug) {
+    if (globalUtil.isDebugMode()) {
         return new _Promise(function (resolve, reject) {
             console.log('[Debug] Hi there ' + user.preferred_name + '! Your role is : ' + user.role);
             resolve('[Debug] Sent PM to user.');
@@ -34,12 +36,7 @@ function messageOrganizer(user, convo) {
     });
 }
 
-function setIsDebug(_isDebug){
-    isDebug = _isDebug;
-}
-
 module.exports = {
     messageUser: messageUser,
-    messageOrganizer: messageOrganizer,
-    setIsDebug : setIsDebug
+    messageOrganizer: messageOrganizer
 };
