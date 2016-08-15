@@ -12,10 +12,18 @@ var storage_directory = minimist(process.argv.slice(2)).s || './storage';
 var token = minimist(process.argv.slice(2)).t;
 var organizer_id = minimist(process.argv.slice(2)).o;
 var current_group_id = minimist(process.argv.slice(2)).g;
+var is_debug = minimist(process.argv.slice(2)).d;
+
+var slackCommSvc = require('./services/slack-communication-service');
+
 
 var COMMAND_DELIMITER = '!';
 var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
 
+
+if(is_debug){
+  slackCommSvc.setIsDebug(is_debug);
+}
 
 function getUserName(user) {
   if (user.profile && user.profile.first_name) {
@@ -184,8 +192,8 @@ new _Promise(function (resolve, reject) {
               var _user = users[j];
               if (roles_pref_obj[_user.id]) {
                 _user.role = roles_pref_obj[_user.id];
-                promises.push(getUserPromise(_user));
-                promises.push(getOrganizerPromise(_user, convo));
+                promises.push(slackCommSvc.messageUser(_user));
+                promises.push(slackCommSvc.messageOrganizer(_user, convo));
                 users.splice(j, 1);
               }
             }
@@ -207,8 +215,8 @@ new _Promise(function (resolve, reject) {
         var preferred_role = roles_meta.role_pref[user_id];
         if (!preferred_role) {
           user.role = shuffledRoles[index];
-          promises.push(getUserPromise(user));
-          promises.push(getOrganizerPromise(user, convo));
+          promises.push(slackCommSvc.messageUser(user));
+          promises.push(slackCommSvc.messageOrganizer(user, convo));
         }
       });
 
@@ -238,28 +246,3 @@ new _Promise(function (resolve, reject) {
   function rejected(error) {
     console.log(error);
   });
-
-function getUserPromise(user) {
-  return new _Promise(function (resolve, reject) {
-    bot.api.chat.postMessage({
-      channel: user.id,
-      text: 'Hi there ' + user.preferred_name + '! Your role is : ' + user.role,
-      username: 'mafia-bot',
-      as_user: true
-    }, function (err, response) {
-      if (err) {
-        reject('Unable to reveal role to user : ' + user.preferred_name + '. Error : ' + err);
-      } {
-        resolve('Revealed role to user : ' + user.preferred_name + ' : ' + user.role + ' via DM');
-      }
-    });
-  });
-}
-
-function getOrganizerPromise(user, convo) {
-  return new _Promise(function (resolve, reject) {
-    var privateMessage = user.preferred_name + '\'s role is : ' + user.role;
-    convo.say(privateMessage);
-    resolve(privateMessage);
-  });
-}
