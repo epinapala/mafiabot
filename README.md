@@ -18,6 +18,8 @@ A simple slackbot to help the mafia game organizer. The bot uses botkit, which i
 ###Start bot
 `$ node app.js -t {slack_bot_token}  -o {organizer_id} -g {slack_group_id}`
 
+#note : use '-d' to start bot in debug mode, this ensures messages are sent to organizer only for testing.
+
 ####Example response
 `info: ** Using simple storage. Saving data to ./storage`
 
@@ -30,6 +32,8 @@ A simple slackbot to help the mafia game organizer. The bot uses botkit, which i
 `notice: RTM websocket opened`
 
 Goto your slack bot and you can start communicating.
+
+** Who ever chats with mafia-bot will be set as the organizer. Rest fo the users(excluding bots) in the mafia group will be used as players.
 
 `!init` -- intializes bot, storage & other stuff.
 
