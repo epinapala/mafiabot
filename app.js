@@ -38,25 +38,17 @@ function getUserName(user) {
 }
 
 new _Promise(function (resolve, reject) {
-  //Clear storage directory
-  rmdir(storage_directory + '/users', function (error) {
-    if (error) {
-      bot.reply(message, 'Unable to initialize Game, Error : ' + err);
-      reject(error);
+  controller = Botkit.slackbot({
+    json_file_store: storage_directory
+  });
+  bot = controller.spawn({
+    token: token
+  });
+  bot.startRTM(function (err, bot, payload) {
+    if (err) {
+      throw new Error('Darn! Could not connect to slack!' + JSON.stringify(err));
     } else {
-      controller = Botkit.slackbot({
-        json_file_store: storage_directory
-      });
-      bot = controller.spawn({
-        token: token
-      });
-      bot.startRTM(function (err, bot, payload) {
-        if (err) {
-          throw new Error('Darn! Could not connect to slack!' + JSON.stringify(err));
-        } else {
-          resolve();
-        }
-      });
+      resolve();
     }
   });
 }).then(function () {
@@ -99,7 +91,7 @@ new _Promise(function (resolve, reject) {
 
             //Get all users from group and iterate.
             var users = group.members || [];
-            _.each(users, function (id) {
+            _.each(users, function (id, index) {
               bot.api.users.info({
                 user: id
               }, function (err, user_data) {
@@ -113,18 +105,13 @@ new _Promise(function (resolve, reject) {
                   if (err) {
                     bot.reply(message, 'Unable to find user : ' + id);
                   } else {
+                    globalUtil.getUsers().push(user);
                     bot.reply(message, user.preferred_name);
-                    controller.storage.users.save(user, function (err) {
-                      if (err) {
-                        console.log('Unable to save user : ' + user.preferred_name);
-                      } else {
-                        console.log('Saved user : ' + user.preferred_name);
-                      }
-                    });
                   }
                 }
               });
             });
+
           } else {
             bot.reply(message, 'unable get group info from slack!');
           }
@@ -171,41 +158,41 @@ new _Promise(function (resolve, reject) {
       var roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
       var promises = [];
 
-      controller.storage.users.all(function (err, all_user_data) {
+
+      var all_user_data = globalUtil.getUsers() || [];
+      if (all_user_data.length < 1) {
+        convo.say('Oh no! Not able to read users list!');
+      } else {
         all_user_data = _.without(all_user_data, _.findWhere(all_user_data, {
           id: organizer_id
         }));
-        if (err) {
-          convo.say('Oh no! Not able to read users list!');
+        if (roleCount !== (all_user_data.length)) {
+          convo.say('Number of roles[' + roleCount + '] doesnt match the number of users[' +
+            all_user_data.length + '] in this channel. Retry with !start command');
         } else {
-          if (roleCount !== (all_user_data.length)) {
-            convo.say('Number of roles[' + roleCount + '] doesnt match the number of users[' +
-              all_user_data.length + '] in this channel. Retry with !start command');
-          } else {
 
-            var users = _.map(all_user_data, function (currentObject) {
-              return _.pick(currentObject, 'name', 'id', 'preferred_name');
-            });
+          var users = _.map(all_user_data, function (currentObject) {
+            return _.pick(currentObject, 'name', 'id', 'preferred_name');
+          });
 
-            var roles_pref_obj = roles_meta.role_pref;
-            var user_ids = Object.keys(roles_pref_obj);
-            var users_to_process = [];
+          var roles_pref_obj = roles_meta.role_pref;
+          var user_ids = Object.keys(roles_pref_obj);
+          var users_to_process = [];
 
-            for (var j = 0; j < users.length; j++) {
-              var _user = users[j];
-              if (roles_pref_obj[_user.id]) {
-                _user.role = roles_pref_obj[_user.id];
-                promises.push(slackCommSvc.messageUser(_user));
-                promises.push(slackCommSvc.messageOrganizer(_user, convo));
-              } else {
-                users_to_process.push(_user);
-              }
+          for (var j = 0; j < users.length; j++) {
+            var _user = users[j];
+            if (roles_pref_obj[_user.id]) {
+              _user.role = roles_pref_obj[_user.id];
+              promises.push(slackCommSvc.messageUser(_user));
+              promises.push(slackCommSvc.messageOrganizer(_user, convo));
+            } else {
+              users_to_process.push(_user);
             }
-            matchRolesForNonPreferenceUsers(users_to_process, roles, promises, convo, roles_meta);
-            convo.next();
           }
+          matchRolesForNonPreferenceUsers(users_to_process, roles, promises, convo, roles_meta);
+          convo.next();
         }
-      });
+      }
     };
 
     matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {

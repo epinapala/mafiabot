@@ -1,4 +1,5 @@
 var _isDebugMode = false;
+var _users = [];
 
 function setDebug(__isDebuMode) {
     _isDebugMode = __isDebuMode;
@@ -10,5 +11,8 @@ function getDebug() {
 
 module.exports = {
     setIsDebugMode: setDebug,
-    isDebugMode: getDebug
+    isDebugMode: getDebug,
+    getUsers : function(){
+        return _users;
+    }
 };
