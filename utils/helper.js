@@ -20,7 +20,18 @@ function formatUptime(uptime) {
     return uptime;
 }
 
+function getUserPreferredName(user) {
+  if (user.profile && user.profile.first_name) {
+    return user.profile.first_name.trim();
+  } else if (user.name) {
+    return user.name;
+  } else {
+    return user.id;
+  }
+}
+
 module.exports = {
 	shuffle : shuffle,//use shuffle-array module's shuffle for now.
-    formatUptime: formatUptime
+    formatUptime: formatUptime,
+    getUserPreferredName : getUserPreferredName
 };

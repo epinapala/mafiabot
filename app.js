@@ -5,7 +5,7 @@ var _ = require('underscore');
 var _Promise = require('bluebird');
 var rmdir = require('rimraf');
 
-var util = require('./utils/helper');
+var helpers = require('./utils/helper');
 var globalUtil = require('./utils/global');
 
 var minimist = require('minimist');
@@ -25,16 +25,6 @@ var ROLE_REMOVED_KEY = 'removed';
 
 if (is_debug) {
   globalUtil.setIsDebugMode(is_debug);
-}
-
-function getUserName(user) {
-  if (user.profile && user.profile.first_name) {
-    return user.profile.first_name.trim();
-  } else if (user.name) {
-    return user.name;
-  } else {
-    return user.id;
-  }
 }
 
 new _Promise(function (resolve, reject) {
@@ -88,7 +78,10 @@ new _Promise(function (resolve, reject) {
           if (group) {
             //If group is found. shout out group name.
             bot.reply(message, 'Group name is : ' + group.name);
-
+            
+            // clear users collection in memory.
+            globalUtil.setUsers([]);
+            
             //Get all users from group and iterate.
             var users = group.members || [];
             _.each(users, function (id, index) {
@@ -96,7 +89,7 @@ new _Promise(function (resolve, reject) {
                 user: id
               }, function (err, user_data) {
                 var user = user_data.user;
-                user.preferred_name = getUserName(user);
+                user.preferred_name = helpers.getUserPreferredName(user);
                 if (user.is_bot) {
                   console.log('Bot User [' + user.name + '], Skipping!');
                 } else if (user.id === organizer_id) {
@@ -158,7 +151,6 @@ new _Promise(function (resolve, reject) {
       var roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
       var promises = [];
 
-
       var all_user_data = globalUtil.getUsers() || [];
       if (all_user_data.length < 1) {
         convo.say('Oh no! Not able to read users list!');
@@ -196,8 +188,8 @@ new _Promise(function (resolve, reject) {
     };
 
     matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {
-      var shuffledUsers = util.shuffle(users);
-      var shuffledRoles = util.shuffle(roles);
+      var shuffledUsers = helpers.shuffle(users);
+      var shuffledRoles = helpers.shuffle(roles);
 
       //Loop through shuffled users to fill roles and send messages
       _.each(shuffledUsers, function (user, index) {
