@@ -106,6 +106,7 @@ new _Promise(function (resolve, reject) {
     };
 
     parseRoles = function (response, convo) {
+      var should_exit = false;
       var role_pref = {};
       var roles = response.text // extract actual message
         .split(',') // split by comma
@@ -116,15 +117,22 @@ new _Promise(function (resolve, reject) {
           var rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
           var cur_role = rolePlayerArr[0];
           var requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
-          roles[i] = ROLE_REMOVED_KEY;
-          role_pref[requested_player_id] = cur_role;
+          if (requested_player_id.indexOf('@') < 0) {
+            roles[i] = ROLE_REMOVED_KEY;
+            role_pref[requested_player_id] = cur_role;
+          } else {
+            convo.say('Unable to identify role preference/user for entry : ' + roles[i]);
+            should_exit = true;
+          }
         }
       }
-      matchRolesForPreferenceUsers({
-        roles: _.without(roles, ROLE_REMOVED_KEY),
-        role_pref: role_pref
-      }, convo);
-      convo.next();
+      if (!should_exit) {
+        matchRolesForPreferenceUsers({
+          roles: _.without(roles, ROLE_REMOVED_KEY),
+          role_pref: role_pref
+        }, convo);
+        convo.next();
+      }
     };
 
     matchRolesForPreferenceUsers = function (roles_meta, convo) {
