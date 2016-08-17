@@ -47,28 +47,9 @@ new _Promise(function (resolve, reject) {
   /* Implementation for init command */
   controller.hears([COMMAND_DELIMITER + 'init'], ['direct_message'], function (bot,
     message) {
-    new _Promise(function (resolve, reject) {
-      //Set the user currently intiializing the game as organizer.
-      if (message.user) {
-        organizer_id = message.user;
-        resolve();
-      }
-    }).then(function () {
-      /** Populate all users in local json storage */
-      //Pull all groups.
-      new _Promise(function (resolve, reject) {
-        bot.api.groups.list({
-          group: current_group_id
-        }, function (err, response) {
-          if (err) {
-            var err_msg = 'Unable to extract Group info : ' + current_group_id;
-            bot.reply(message, err_msg);
-            reject(err_msg);
-          } else {
-            resolve(response.groups);
-          }
-        });
-      }).then(function (groups) {
+    //Pull all groups.
+    slackCommSvc
+      .retreiveAllGroups(bot, current_group_id).then(function (groups) {
         if (groups) {
           //Filter and get group by group ID
           var group = _.find(groups, function (object) {
@@ -78,33 +59,34 @@ new _Promise(function (resolve, reject) {
           if (group) {
             //If group is found. shout out group name.
             bot.reply(message, 'Group name is : ' + group.name);
-            
+
             // clear users collection in memory.
             globalUtil.setUsers([]);
-            
+
             //Get all users from group and iterate.
             var users = group.members || [];
+
+            //Set the user currently intiializing the game as organizer.
+            if (message.user) {
+              organizer_id = message.user;
+            }
+
             _.each(users, function (id, index) {
-              bot.api.users.info({
-                user: id
-              }, function (err, user_data) {
-                var user = user_data.user;
-                user.preferred_name = helpers.getUserPreferredName(user);
-                if (user.is_bot) {
-                  console.log('Bot User [' + user.name + '], Skipping!');
-                } else if (user.id === organizer_id) {
-                  console.log('Organizer [' + user.preferred_name + '] , Skipping!');
-                } else {
-                  if (err) {
-                    bot.reply(message, 'Unable to find user : ' + id);
+              slackCommSvc.retreiveUserInfo(bot, id)
+                .then(function resolved(user) {
+                  user.preferred_name = helpers.getUserPreferredName(user);
+                  if (user.is_bot) {
+                    console.log('Bot User [' + user.name + '], Skipping!');
+                  } else if (user.id === organizer_id) {
+                    console.log('Organizer [' + user.preferred_name + '] , Skipping!');
                   } else {
                     globalUtil.getUsers().push(user);
                     bot.reply(message, user.preferred_name);
                   }
-                }
-              });
+                }, function rejected(err) {
+                  bot.reply(message, err);
+                });
             });
-
           } else {
             bot.reply(message, 'unable get group info from slack!');
           }
@@ -112,7 +94,6 @@ new _Promise(function (resolve, reject) {
           bot.reply(message, 'No channels group from slack :(');
         }
       });
-    });
   });
 
   /* Implementation for start command */

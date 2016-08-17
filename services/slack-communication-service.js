@@ -36,7 +36,39 @@ function messageOrganizer(user, convo) {
     });
 }
 
+function retreiveAllGroups(bot, current_group_id) {
+    return new _Promise(function (resolve, reject) {
+        bot.api.groups.list({
+            group: current_group_id
+        }, function (err, response) {
+            if (err) {
+                var err_msg = 'Unable to extract Group info : ' + current_group_id;
+                bot.reply(message, err_msg);
+                reject(err_msg);
+            } else {
+                resolve(response.groups);
+            }
+        });
+    });
+}
+
+function retreiveUserInfo(bot, user_id) {
+    return new _Promise(function (resolve, reject) {
+        bot.api.users.info({
+            user: user_id
+        }, function (err, user_data) {
+            if (err) {
+                reject('Unable to retreive user, Error : ' + err);
+            } else {
+                resolve(user_data.user);
+            }
+        });
+    });
+}
+
 module.exports = {
+    retreiveAllGroups: retreiveAllGroups,
+    retreiveUserInfo: retreiveUserInfo,
     messageUser: messageUser,
     messageOrganizer: messageOrganizer
 };
