@@ -12,16 +12,17 @@ function messageUser(bot, user) {
         });
     } else {
         return new _Promise(function (resolve, reject) {
+            var role = user.role;
             bot.api.chat.postMessage({
                 channel: user.id,
-                text: 'Hi there ' + user.preferred_name + '! Your role is : ' + user.role,
+                text: 'Hi there ' + user.preferred_name + '! Your role is : ' + role + '\n' + '-=-=-=-=-==-=-=-=-=-=--=-=-=',
                 username: 'mafia-bot',
                 as_user: true
             }, function (err, response) {
                 if (err) {
                     reject('Unable to reveal role to user : ' + user.preferred_name + '. Error : ' + err);
                 } {
-                    resolve('Revealed role to user : ' + user.preferred_name + ' : ' + user.role + ' via DM');
+                    resolve('Revealed role to user : ' + user.preferred_name + ' : ' + role + ' via DM');
                 }
             });
         });
