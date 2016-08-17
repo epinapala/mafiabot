@@ -4,7 +4,7 @@ var globalUtil = require('../utils/global');
 var _Promise = require('bluebird');
 var isDebug = false;
 
-function messageUser(user) {
+function messageUser(bot, user) {
     if (globalUtil.isDebugMode()) {
         return new _Promise(function (resolve, reject) {
             console.log('[Debug] Hi there ' + user.preferred_name + '! Your role is : ' + user.role);

@@ -156,7 +156,7 @@ new _Promise(function (resolve, reject) {
             var _user = users[j];
             if (roles_pref_obj[_user.id]) {
               _user.role = roles_pref_obj[_user.id];
-              promises.push(slackCommSvc.messageUser(_user));
+              promises.push(slackCommSvc.messageUser(bot, _user));
               promises.push(slackCommSvc.messageOrganizer(_user, convo));
             } else {
               users_to_process.push(_user);
@@ -177,7 +177,7 @@ new _Promise(function (resolve, reject) {
         var user_id = user.id;
         if (!user.is_processed) {
           user.role = shuffledRoles[index];
-          promises.push(slackCommSvc.messageUser(user));
+          promises.push(slackCommSvc.messageUser(bot, user));
           promises.push(slackCommSvc.messageOrganizer(user, convo));
         }
       });
