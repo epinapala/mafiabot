@@ -1,31 +1,33 @@
 /** jshint esnext: true */
-var controller, bot;
-var Botkit = require('botkit');
-var _ = require('underscore');
-var _Promise = require('bluebird');
-var rmdir = require('rimraf');
 
+var bot;
+var controller;
+var Botkit = require('botkit');
+var _Promise = require('bluebird');
+
+/* utils */
+var minimist = require('minimist');
+var _ = require('underscore');
 var helpers = require('./utils/helper');
 var globalUtil = require('./utils/global');
 
-var minimist = require('minimist');
+/* parse command line args for default params. */
 var storage_directory = minimist(process.argv.slice(2)).s || './storage';
 var token = minimist(process.argv.slice(2)).t;
 var organizer_id = minimist(process.argv.slice(2)).o;
 var current_group_id = minimist(process.argv.slice(2)).g;
 var is_debug = minimist(process.argv.slice(2)).d;
-
-var slackCommSvc = require('./services/slack-communication-service');
-
-
-var COMMAND_DELIMITER = '!';
-var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
-var ROLE_REMOVED_KEY = 'removed';
-
-
 if (is_debug) {
   globalUtil.setIsDebugMode(is_debug);
 }
+
+/* Services */
+var slackCommSvc = require('./services/slack-communication-service');
+
+/* String constants */
+var COMMAND_DELIMITER = '!';
+var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
+var ROLE_REMOVED_KEY = 'removed';
 
 new _Promise(function (resolve, reject) {
   controller = Botkit.slackbot({
