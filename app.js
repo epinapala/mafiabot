@@ -60,7 +60,7 @@ new _Promise(function (resolve, reject) {
 
           if (group) {
             //If group is found. shout out group name.
-            bot.reply(message, 'Group name is : ' + group.name);
+            bot.reply(message, 'Hold on a sec while I fetch players from the group "' + group.name + '"');
 
             // clear users collection in memory.
             globalUtil.setUsers([]);
@@ -72,23 +72,34 @@ new _Promise(function (resolve, reject) {
             if (message.user) {
               organizer_id = message.user;
             }
-
+            var userInfoPromises = [];
+            /* collect all promises for execution. */
             _.each(users, function (id, index) {
-              slackCommSvc.retreiveUserInfo(bot, id)
-                .then(function resolved(user) {
+              userInfoPromises.push(slackCommSvc.retreiveUserInfo(bot, id));
+            });
+
+            /* use _Promise.all as we would like to reject even if one userInfo calls fails.*/
+            _Promise.all(userInfoPromises)
+              .then(function resolved(results) {
+                var all_users = 'Players :  ';
+                results.forEach(function (user) {
                   user.preferred_name = helpers.getUserPreferredName(user);
                   if (user.is_bot) {
                     console.log('Bot User [' + user.name + '], Skipping!');
                   } else if (user.id === organizer_id) {
                     console.log('Organizer [' + user.preferred_name + '] , Skipping!');
+                    bot.reply(message, 'Organizer : ' + user.preferred_name + '(You)');
                   } else {
                     globalUtil.getUsers().push(user);
-                    bot.reply(message, user.preferred_name);
+                    all_users += user.preferred_name + ' | ';
                   }
-                }, function rejected(err) {
-                  bot.reply(message, err);
                 });
-            });
+                bot.reply(message, all_users);
+              }, function rejected(err) {
+                bot.reply(message, 'An error occour while reading users : ' + err);
+              });
+
+
           } else {
             bot.reply(message, 'unable get group info from slack!');
           }
