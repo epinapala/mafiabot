@@ -91,7 +91,7 @@ new _Promise(function (resolve, reject) {
                     bot.reply(message, 'Organizer : ' + user.preferred_name + '(You)');
                   } else {
                     globalUtil.getUsers().push(user);
-                    all_users += user.preferred_name + ' | ';
+                    all_users += user.preferred_name + ' (@'+ user.name+ ')' + ' | ';
                   }
                 });
                 bot.reply(message, all_users);
