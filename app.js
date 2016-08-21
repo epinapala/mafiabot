@@ -67,7 +67,7 @@ slackCommunicationService
 
             if (group) {
               //If group is found. shout out group name.
-              bot.reply(message, 'Hold on a sec while I fetch players from the group "' + group.name + '"');
+              bot.reply(message, 'A new game started in the group "' + group.name + '"');
 
               // clear users collection in memory.
               globalUtil.setUsers([]);
