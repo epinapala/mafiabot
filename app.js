@@ -202,6 +202,7 @@ slackCommunicationService
         var shuffledRoles = helpers.shuffle(roles);
 
         //Loop through shuffled users to fill roles and send messages
+        //TODO normalize this logic to build messages in loop and then send messages in just 2 promises.
         _.each(shuffledUsers, function (user, index) {
           var user_id = user.id;
           if (!user.is_processed) {
@@ -220,8 +221,7 @@ slackCommunicationService
             function (promise) {
               return promise.reflect();
             }
-          )
-        );
+          ));
 
         //inspect each of the promises that were deferred.
         promiseResults.each(function (inspection) {
