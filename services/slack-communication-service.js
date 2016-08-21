@@ -67,7 +67,22 @@ function retreiveUserInfo(bot, user_id) {
     });
 }
 
+function initializeBotRtm(bot) {
+    return new _Promise(function (resolve, reject) {
+        bot.startRTM(function (err, bot, payload) {
+            if (err) {
+                //halt here if bot couldnt connect to slack.
+                throw new Error('Darn! Could not connect to slack!' + JSON.stringify(err));
+            } else {
+                console.log('Connected to Slack RTM!');
+                resolve();
+            }
+        });
+    });
+}
+
 module.exports = {
+    initializeBotRtm: initializeBotRtm,
     retreiveAllGroups: retreiveAllGroups,
     retreiveUserInfo: retreiveUserInfo,
     messageUser: messageUser,
