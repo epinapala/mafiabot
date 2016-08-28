@@ -203,12 +203,14 @@ slackCommunicationService
 
         //Loop through shuffled users to fill roles and send messages
         //TODO normalize this logic to build messages in loop and then send messages in just 2 promises.
+        //Send game name to organizer
+        promises.push(slackCommunicationService.messageGameNameToOrganizer(convo));
         _.each(shuffledUsers, function (user, index) {
           var user_id = user.id;
           if (!user.is_processed) {
             user.role = shuffledRoles[index];
             promises.push(slackCommunicationService.messageUser(bot, user));
-            promises.push(slackCommunicationService.messageOrganizer(user, convo));
+            promises.push(slackCommunicationService.messageUserRoleToOrganizer(user, convo));
           }
         });
 

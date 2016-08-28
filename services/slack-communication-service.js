@@ -30,11 +30,19 @@ function messageUser(bot, user) {
     }
 }
 
-function messageOrganizer(user, convo) {
+function messageGameNameToOrganizer(convo){
+  return messageOrganizer('Game name is ' + rw, convo);
+}
+
+function messageUserRoleToOrganizer(user, convo) {
+    var message = rw + user.preferred_name + '\'s role is : ' + user.role;
+    return messageOrganizer(message, convo);
+}
+
+function messageOrganizer(message, convo) {
     return new _Promise(function (resolve, reject) {
-        var privateMessage = rw + user.preferred_name + '\'s role is : ' + user.role;
-        convo.say(privateMessage);
-        resolve(privateMessage);
+        convo.say(message);
+        resolve(message);
     });
 }
 
@@ -87,5 +95,7 @@ module.exports = {
     retreiveAllGroups: retreiveAllGroups,
     retreiveUserInfo: retreiveUserInfo,
     messageUser: messageUser,
-    messageOrganizer: messageOrganizer
+    messageOrganizer: messageOrganizer,
+    messageUserRoleToOrganizer : messageUserRoleToOrganizer,
+    messageGameNameToOrganizer : messageGameNameToOrganizer
 };
