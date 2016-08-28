@@ -3,7 +3,6 @@
 var globalUtil = require('../utils/global');
 var _Promise = require('bluebird');
 var isDebug = false;
-var rw =  '['+  require('random-words')()  + '] > ';
 
 function messageUser(bot, user) {
     if (globalUtil.isDebugMode()) {
@@ -16,7 +15,7 @@ function messageUser(bot, user) {
             var role = user.role;
             bot.api.chat.postMessage({
                 channel: user.id,
-                text: rw + 'Hi there ' + user.preferred_name + '! Your role is : ' + role + '\n' + '-=-=-=-=-==-=-=-=-=-=--=-=-=',
+                text: '['+  globalUtil.getRandomWord()  + ']  ' + 'Hi there ' + user.preferred_name + '! Your role is : ' + role + '\n' + '-=-=-=-=-==-=-=-=-=-=--=-=-=',
                 username: 'mafia-bot',
                 as_user: true
             }, function (err, response) {
@@ -31,11 +30,11 @@ function messageUser(bot, user) {
 }
 
 function messageGameNameToOrganizer(convo){
-  return messageOrganizer('Game name is ' + rw, convo);
+  return messageOrganizer('Game name is ' + '['+  globalUtil.getRandomWord()  + '] ', convo);
 }
 
 function messageUserRoleToOrganizer(user, convo) {
-    var message = rw + user.preferred_name + '\'s role is : ' + user.role;
+    var message = user.preferred_name + '\'s role is : ' + user.role;
     return messageOrganizer(message, convo);
 }
 

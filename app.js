@@ -119,6 +119,7 @@ slackCommunicationService
     /* Implementation for start command */
     controller.hears([COMMAND_DELIMITER + COMMAND_START], ['direct_message'], function (bot, message) {
       askRoles = function (response, convo) {
+        globalUtil.generateRandomWord();
         convo.ask('What roles are you planning to assign? Please specify comma seperate. For specifying a role preference use colon and mention. Ex: Role1, Role2 ' + ROLE_PREFERENCE_SEPERATOR + ' @username, Role3.',
           function (response, convo) {
             parseRoles(response, convo);
