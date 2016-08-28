@@ -3,7 +3,7 @@
 var globalUtil = require('../utils/global');
 var _Promise = require('bluebird');
 var isDebug = false;
-var rw =  '[Game - '+  require('random-words')()  + '] > ';
+var rw =  '['+  require('random-words')()  + '] > ';
 
 function messageUser(bot, user) {
     if (globalUtil.isDebugMode()) {
