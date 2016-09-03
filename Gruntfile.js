@@ -1,6 +1,11 @@
 // Generated on 2016-08-06 using generator-nodejs 3.2.0
 module.exports = function (grunt) {
   grunt.initConfig({
+    debug: {
+      options: {
+        open: true // do not open node-inspector in Chrome automatically 
+      }
+    },
     pkg: grunt.file.readJSON('package.json'),
     complexity: {
       generic: {
@@ -41,6 +46,7 @@ module.exports = function (grunt) {
     }
   });
 
+  grunt.loadNpmTasks('grunt-debug-task');
   grunt.loadNpmTasks('grunt-complexity');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');

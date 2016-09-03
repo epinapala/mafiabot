@@ -34,7 +34,7 @@ var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
 var ROLE_REMOVED_KEY = 'removed';
 var ROLE_PREFERENCE_SEPERATOR = ':';
 //commands
-var COMMAND_DELIMITER = '!';
+var COMMAND_DELIMITER = '//';
 var COMMAND_INIT = 'init';
 var COMMAND_START = 'start';
 
@@ -118,16 +118,84 @@ slackCommunicationService
 
     /* Implementation for start command */
     controller.hears([COMMAND_DELIMITER + COMMAND_START], ['direct_message'], function (bot, message) {
-      askRoles = function (response, convo) {
-        globalUtil.generateRandomWord();
-        convo.ask('What roles are you planning to assign? Please specify comma seperate. For specifying a role preference use colon and mention. Ex: Role1, Role2 ' + ROLE_PREFERENCE_SEPERATOR + ' @username, Role3.',
-          function (response, convo) {
-            parseRoles(response, convo);
-            convo.next();
-          });
+
+      initConvo = function (response, convo) {
+        convo.ask('Do you want to customize roles?  Say YES, NO or DONE to quit.', [
+          {
+            pattern: 'done',
+            callback: function (response, convo) {
+              convo.say('OK, take your time!');
+              convo.next();
+            }
+          },
+          {
+            pattern: bot.utterances.yes,
+            callback: function (response, convo) {
+              convo.ask(
+                'Great, Please use the following format to specify roles' + '\n' +
+                'mandatory_role1:max,mandatory_role2:max...etc|opt_role_1:max,opt_role_2:max..etc' + '\n' +
+                'type \'done\' to quit any time',
+                [
+                  {
+                    pattern: 'done',
+                    callback: function (response, convo) {
+                      convo.say('OK, take your time!');
+                      convo.next();
+                    }
+                  },
+                  {
+                    default: true,
+                    callback: function (response, convo) {
+                      parseCustomizedRoles(response, convo);
+                      convo.next();
+                    }
+                  }
+                ]);
+
+              convo.next();
+            }
+          },
+          {
+            pattern: bot.utterances.no,
+            callback: function (response, convo) {
+              globalUtil.generateRandomWord();
+              convo.ask(
+                'What roles are you planning to assign? Please specify comma seperated' + '\n' +
+                'For specifying a role preference use colon and mention. Ex: Role1, Role2 ' + ROLE_PREFERENCE_SEPERATOR + ' @username, Role3.' + '\n' +
+                'Type \'done\' anytime to quit.',
+                [{
+                  pattern: 'done',
+                  callback: function (response, convo) {
+                    convo.say('OK, take your time!');
+                    convo.next();
+                  }
+                },
+                  {
+                    default: true,
+                    callback: function (response, convo) {
+                      parseCommaSeperatedRoles(response, convo);
+                      convo.next();
+                    }
+                  }]);
+                  convo.next();
+            }
+          },
+          {
+            default: true,
+            callback: function (response, convo) {
+              // just repeat the question
+              convo.repeat();
+              convo.next();
+            }
+          }
+        ]);
+      };
+      parseCustomizedRoles = function(response, convo){
+        var roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
+        convo.say(roles);
       };
 
-      parseRoles = function (response, convo) {
+      parseCommaSeperatedRoles = function (response, convo) {
         var should_exit = false;
         var role_pref = {};
         var roles = response.text // extract actual message
@@ -165,6 +233,7 @@ slackCommunicationService
         var all_user_data = globalUtil.getUsers() || [];
         if (all_user_data.length < 1) {
           convo.say('Oh no! Not able to read users list!');
+          convo.repeat();
         } else {
           all_user_data = _.without(all_user_data, _.findWhere(all_user_data, {
             id: organizer_id
@@ -239,7 +308,7 @@ slackCommunicationService
         console.log('Here is a summary of all users and their roles : ' + JSON.stringify(users));
       };
       //initialize conversation with the organizer
-      bot.startConversation(message, askRoles);
+      bot.startConversation(message, initConvo);
     });
   },
   /** Handle the final common rejection here. */
