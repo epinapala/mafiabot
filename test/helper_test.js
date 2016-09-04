@@ -46,7 +46,18 @@ describe('helpers test suite', function suite() {
             expect(result).to.include("m1");
             expect(result).to.include("m2");
             expect(result).to.include("m3");
-            expect(result).to.include("m4"); // cannot assert anything else.
+            expect(result).to.include("m4");
+        });
+
+        it('should assign roles in such a way that optional roles are filled in remianing slots.', function () {
+            let roles = {
+                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL] : ["o1", "o2", "o3", "o4", "o5", "o6", "o7","o8", "o9"]
+            };
+
+            let user_count = 10;
+            var result = helper.getComputedRoleResult(roles, user_count);
+            expect(_.intersection(result, roles[ROLE_OPTIONAL])).to.have.lengthOf((user_count - roles[ROLE_MANDATORY].length));
         });
 
         it('should not assign roles when mandatory role count exceed user count', function () {
