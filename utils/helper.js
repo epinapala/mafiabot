@@ -43,10 +43,10 @@ function getCommaSeperatedRolesFromCustomFormat(input) {
     let allRolesInputArray = splitAndTrimByCharacter(input, '|');
     let customMandatoryRoleArray = splitAndTrimByCharacter(allRolesInputArray[0], ',');
     let customOptionalRoleArray = splitAndTrimByCharacter(allRolesInputArray[1], ',');
-    return _.flatten([
-        fillRolesByRoleCount(customMandatoryRoleArray, ROLE_MANDATORY),
-        fillRolesByRoleCount(customOptionalRoleArray, ROLE_OPTIONAL)
-    ]).join();
+    return {
+        [ROLE_MANDATORY] : fillRolesByRoleCount(customMandatoryRoleArray, ROLE_MANDATORY),
+        [ROLE_OPTIONAL] : fillRolesByRoleCount(customOptionalRoleArray, ROLE_OPTIONAL)
+    };
 }
 
 function fillRolesByRoleCount(roleArray, roleType) {
