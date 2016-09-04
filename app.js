@@ -1,42 +1,42 @@
-/** jshint esnext: true */
+/*jshint esnext : true*/
 
-var bot;
-var controller;
-var Botkit = require('botkit');
-var _Promise = require('bluebird');
+let bot;
+let controller;
+const Botkit = require('botkit');
+const _Promise = require('bluebird');
 
 /* utils */
-var minimist = require('minimist');
-var _ = require('underscore');
-var helpers = require('./utils/helper');
-var globalUtil = require('./utils/global');
+const minimist = require('minimist');
+const _ = require('underscore');
+const helpers = require('./utils/helper');
+const globalUtil = require('./utils/global');
 
 /* parse command line args for default params. */
-var storage_directory = minimist(process.argv.slice(2)).s || './storage';//read json file storage directory.
-var token = minimist(process.argv.slice(2)).t; //read slack token.
+const storage_directory = minimist(process.argv.slice(2)).s || './storage';//read json file storage directory.
+const token = minimist(process.argv.slice(2)).t; //read slack token.
 
 if (!token) {
   console.log('Slack token is required. Please use \'-t\' to set Slack token');
 }
 
-var organizer_id = minimist(process.argv.slice(2)).o; //Default organizer ID.
-var current_group_id = minimist(process.argv.slice(2)).g; //Default group ID.
-var is_debug = minimist(process.argv.slice(2)).d;// read debug mode flag.
+let organizer_id = minimist(process.argv.slice(2)).o; //Default organizer ID.
+let current_group_id = minimist(process.argv.slice(2)).g; //Default group ID.
+const is_debug = minimist(process.argv.slice(2)).d;// read debug mode flag.
 if (is_debug) {
   globalUtil.setIsDebugMode(is_debug);
 }
 
 /* Services */
-var slackCommunicationService = require('./services/slack-communication-service');
+const slackCommunicationService = require('./services/slack-communication-service');
 
 /* String constants */
-var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
-var ROLE_REMOVED_KEY = 'removed';
-var ROLE_PREFERENCE_SEPERATOR = ':';
+const MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
+const ROLE_REMOVED_KEY = 'removed';
+const ROLE_PREFERENCE_SEPERATOR = ':';
 //commands
-var COMMAND_DELIMITER = '//';
-var COMMAND_INIT = 'init';
-var COMMAND_START = 'start';
+const COMMAND_DELIMITER = '//';
+const COMMAND_INIT = 'init';
+const COMMAND_START = 'start';
 
 /**
  * Initialize bot and controller.
@@ -61,7 +61,7 @@ slackCommunicationService
         .retreiveAllGroups(bot, current_group_id).then(function (groups) {
           if (groups) {
             //Filter and get group by group ID
-            var group = _.find(groups, function (object) {
+            let group = _.find(groups, function (object) {
               return object.id === current_group_id;
             });
 
@@ -73,13 +73,13 @@ slackCommunicationService
               globalUtil.setUsers([]);
 
               //Get all users from group and iterate.
-              var users = group.members || [];
+              let users = group.members || [];
 
               //Set the user currently intiializing the game as organizer.
               if (message.user) {
                 organizer_id = message.user;
               }
-              var userInfoPromises = [];
+              let userInfoPromises = [];
               /* collect all promises for execution. */
               _.each(users, function (id, index) {
                 userInfoPromises.push(slackCommunicationService.retreiveUserInfo(bot, id));
@@ -88,7 +88,7 @@ slackCommunicationService
               /* use _Promise.all as we would like to reject even if one userInfo calls fails.*/
               _Promise.all(userInfoPromises)
                 .then(function resolved(results) {
-                  var all_users = 'Players :  ';
+                  let all_users = 'Players :  ';
                   results.forEach(function (user) {
                     user.preferred_name = helpers.getUserPreferredName(user);
                     if (user.is_bot) {
@@ -191,22 +191,23 @@ slackCommunicationService
         ]);
       };
       parseCustomizedRoles = function(response, convo){
-        var roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
-        convo.say(roles);
+        let roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
+
+        convo.say(JSON.stringify(roles));
       };
 
       parseCommaSeperatedRoles = function (response, convo) {
-        var should_exit = false;
-        var role_pref = {};
-        var roles = response.text // extract actual message
+        let should_exit = false;
+        let role_pref = {};
+        let roles = response.text // extract actual message
           .split(',') // split by comma
           .map( // trim each role
           Function.prototype.call, String.prototype.trim);
-        for (var i = 0; i < roles.length; i++) {
+        for (let i = 0; i < roles.length; i++) {
           if (roles[i].indexOf(ROLE_PREFERENCE_SEPERATOR) > -1) {
-            var rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
-            var cur_role = rolePlayerArr[0];
-            var requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
+            let rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
+            let cur_role = rolePlayerArr[0];
+            let requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
             if (requested_player_id.indexOf('@') < 0) {
               roles[i] = ROLE_REMOVED_KEY;
               role_pref[requested_player_id] = cur_role;
@@ -222,15 +223,17 @@ slackCommunicationService
             role_pref: role_pref
           }, convo);
           convo.next();
+        }else{
+          convo.repeat();
         }
       };
 
       matchRolesForPreferenceUsers = function (roles_meta, convo) {
-        var roles = roles_meta.roles;
-        var roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
-        var promises = [];
+        let roles = roles_meta.roles;
+        let roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
+        let promises = [];
 
-        var all_user_data = globalUtil.getUsers() || [];
+        let all_user_data = globalUtil.getUsers() || [];
         if (all_user_data.length < 1) {
           convo.say('Oh no! Not able to read users list!');
           convo.repeat();
@@ -241,18 +244,19 @@ slackCommunicationService
           if (roleCount !== (all_user_data.length)) {
             convo.say('Number of roles[' + roleCount + '] doesnt match the number of users[' +
               all_user_data.length + '] in this channel. Retry with !start command');
+              convo.repeat();
           } else {
 
-            var users = _.map(all_user_data, function (currentObject) {
+            let users = _.map(all_user_data, function (currentObject) {
               return _.pick(currentObject, 'name', 'id', 'preferred_name');
             });
 
-            var roles_pref_obj = roles_meta.role_pref;
-            var user_ids = Object.keys(roles_pref_obj);
-            var users_to_process = [];
+            let roles_pref_obj = roles_meta.role_pref;
+            let user_ids = Object.keys(roles_pref_obj);
+            let users_to_process = [];
 
-            for (var j = 0; j < users.length; j++) {
-              var _user = users[j];
+            for (let j = 0; j < users.length; j++) {
+              let _user = users[j];
               if (roles_pref_obj[_user.id]) {
                 _user.role = roles_pref_obj[_user.id];
                 promises.push(slackCommunicationService.messageUser(bot, _user));
@@ -268,15 +272,15 @@ slackCommunicationService
       };
 
       matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {
-        var shuffledUsers = helpers.shuffle(users);
-        var shuffledRoles = helpers.shuffle(roles);
+        let shuffledUsers = helpers.shuffle(users);
+        let shuffledRoles = helpers.shuffle(roles);
 
         //Loop through shuffled users to fill roles and send messages
         //TODO normalize this logic to build messages in loop and then send messages in just 2 promises.
         //Send game name to organizer
         promises.push(slackCommunicationService.messageGameNameToOrganizer(convo));
         _.each(shuffledUsers, function (user, index) {
-          var user_id = user.id;
+          let user_id = user.id;
           if (!user.is_processed) {
             user.role = shuffledRoles[index];
             promises.push(slackCommunicationService.messageUser(bot, user));
@@ -288,7 +292,7 @@ slackCommunicationService
          * We do a reflect of each promise inside all, this ensures 
          * promises are resolved wven when there are one or more rejects.
          */
-        var promiseResults = _Promise.all(
+        let promiseResults = _Promise.all(
           promises.map(
             function (promise) {
               return promise.reflect();
