@@ -1,5 +1,6 @@
 /* global require, describe, it */
 /* jshint expr: true, node: true,  esnext : true*/
+
 'use strict';
 
 const chai = require('chai');

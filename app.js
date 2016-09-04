@@ -1,4 +1,6 @@
-/*jshint esnext : true*/
+/*jshint -W117, expr: true, node: true, esnext : true*/
+
+'use strict';
 
 let bot;
 let controller;
