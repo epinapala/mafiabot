@@ -38,6 +38,7 @@ const ROLE_OPTIONAL = constants.ROLE_OPTIONAL;
 const MESSAGE_SEPERATOR = constants.MESSAGE_SEPERATOR;
 const ROLE_REMOVED_KEY = constants.ROLE_REMOVED_KEY;
 const ROLE_PREFERENCE_SEPERATOR = constants.ROLE_PREFERENCE_SEPERATOR;
+const ROLE_CATEGORY_SEPERATOR = constants.ROLE_CATEGORY_SEPERATOR;
 
 //commands
 const COMMAND_DELIMITER = constants.COMMAND_DELIMITER;
@@ -197,11 +198,21 @@ slackCommunicationService
         ]);
       };
       let parseCustomizedRoles = function (response, convo) {
-        const roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
-        let user_count = (globalUtil.getUsers() || []).length;
-        response.text = helpers.getComputedRoleResult(roles, user_count).join();
-        parseCommaSeperatedRoles(response, convo);
-        convo.next();
+        if (response.text.indexOf(ROLE_CATEGORY_SEPERATOR) < 0) {
+          convo.say("Invalid input, Please try again...");
+          convo.repeat();
+          convo.next();
+        } else {
+          const roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
+          let user_count = (globalUtil.getUsers() || []).length;
+          /** TODO revisit this logic
+           if ((roles[ROLE_MANDATORY].length + roles[ROLE_OPTIONAL].length) >= user_count && roles[ROLE_OPTIONAL].length < 1) {
+            convo.say('Note: No optional roles found.');
+          }**/
+          response.text = helpers.getComputedRoleResult(roles, user_count).join();
+          parseCommaSeperatedRoles(response, convo);
+          convo.next();
+        }
       };
 
       let parseCommaSeperatedRoles = function (response, convo) {
@@ -251,7 +262,7 @@ slackCommunicationService
           }));
           if (roleCount !== (all_user_data.length)) {
             convo.say('Number of roles[' + roleCount + '] doesnt match the number of users[' +
-              all_user_data.length + '] in this channel. Retry with !start command');
+              all_user_data.length + '] in this channel. Retry with start command');
             convo.repeat();
           } else {
 
