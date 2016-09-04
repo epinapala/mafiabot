@@ -4,6 +4,9 @@ const shuffle = require('shuffle-array');
 const _ = require('underscore');
 const ROLE_MANDATORY = 'role_mandatory';
 const ROLE_OPTIONAL = 'role_optional';
+const ROLE_CATEGORY_SPLIT_DELIMITER = '|';
+const ROLE_SEPERATOR = ',';
+const ROLE_COUNT_SEPERATOR = ':';
 
 function formatUptime(uptime) {
     let unit = 'second';
@@ -40,9 +43,9 @@ function splitAndTrimByCharacter(input, char) {
 }
 
 function getCommaSeperatedRolesFromCustomFormat(input) {
-    let allRolesInputArray = splitAndTrimByCharacter(input, '|');
-    let customMandatoryRoleArray = splitAndTrimByCharacter(allRolesInputArray[0], ',');
-    let customOptionalRoleArray = splitAndTrimByCharacter(allRolesInputArray[1], ',');
+    let allRolesInputArray = splitAndTrimByCharacter(input, ROLE_CATEGORY_SPLIT_DELIMITER);
+    let customMandatoryRoleArray = splitAndTrimByCharacter(allRolesInputArray[0], ROLE_SEPERATOR);
+    let customOptionalRoleArray = splitAndTrimByCharacter(allRolesInputArray[1], ROLE_SEPERATOR);
     return {
         [ROLE_MANDATORY] : fillRolesByRoleCount(customMandatoryRoleArray, ROLE_MANDATORY),
         [ROLE_OPTIONAL] : fillRolesByRoleCount(customOptionalRoleArray, ROLE_OPTIONAL)
@@ -54,11 +57,11 @@ function fillRolesByRoleCount(roleArray, roleType) {
     _.each(roleArray, function (item, index) {
         let numOfColons = item.match(/:/g).length;
         if (numOfColons === 1) {
-            let itemArr = splitAndTrimByCharacter(item, ':');
+            let itemArr = splitAndTrimByCharacter(item, ROLE_COUNT_SEPERATOR);
             let curRoles = fillArray(itemArr[0], parseInt(itemArr[1]));
             roles.push(curRoles);
         } else {
-            console.log('Skipping malformed item :' + item);
+            console.log('Skipping malformed item -' + item);
         }
     });
     return _.flatten(roles);//flatten array of arrays to a single array
