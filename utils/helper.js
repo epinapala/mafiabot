@@ -6,7 +6,7 @@ const ROLE_MANDATORY = 'role_mandatory';
 const ROLE_OPTIONAL = 'role_optional';
 
 function formatUptime(uptime) {
-    var unit = 'second';
+    let unit = 'second';
     if (uptime > 60) {
         uptime = uptime / 60;
         unit = 'minute';
@@ -43,26 +43,25 @@ function getCommaSeperatedRolesFromCustomFormat(input) {
     let allRolesInputArray = splitAndTrimByCharacter(input, '|');
     let customMandatoryRoleArray = splitAndTrimByCharacter(allRolesInputArray[0], ',');
     let customOptionalRoleArray = splitAndTrimByCharacter(allRolesInputArray[1], ',');
-    let roles = [];
-
-    roles.concat(fillRolesByRoleCount(customMandatoryRoleArray), ROLE_MANDATORY);
-    roles.concat(fillRolesByRoleCount(customOptionalRoleArray), ROLE_OPTIONAL);
-
-    return roles.join();
+    return _.flatten([
+        fillRolesByRoleCount(customMandatoryRoleArray, ROLE_MANDATORY),
+        fillRolesByRoleCount(customOptionalRoleArray, ROLE_OPTIONAL)
+    ]).join();
 }
 
 function fillRolesByRoleCount(roleArray, roleType) {
-    var roles = [];
+    let roles = [];
     _.each(roleArray, function (item, index) {
-        var numOfColons = item.match(/:/g).length;
+        let numOfColons = item.match(/:/g).length;
         if (numOfColons === 1) {
-            var itemArr = splitAndTrimByCharacter(item, ':');
-            roles.push(fillArray(itemArr[0], parseInt(itemArr[1])));
+            let itemArr = splitAndTrimByCharacter(item, ':');
+            let curRoles = fillArray(itemArr[0], parseInt(itemArr[1]));
+            roles.push(curRoles);
         } else {
             console.log('Skipping malformed item :' + item);
         }
     });
-    return roles;
+    return _.flatten(roles);//flatten array of arrays to a single array
 }
 
 function fillArray(elementToRepeat, repeatTimes) {
