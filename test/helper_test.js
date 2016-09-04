@@ -2,13 +2,14 @@
 /* jshint expr: true, node: true,  esnext : true*/
 'use strict';
 
-var chai = require('chai');
-var expect = chai.expect;
-var helper = require('../utils/helper.js');
-var _ = require('underscore');
+const chai = require('chai');
+const expect = chai.expect;
+const helper = require('../utils/helper.js');
+const _ = require('underscore');
 
-const ROLE_MANDATORY = 'role_mandatory';
-const ROLE_OPTIONAL = 'role_optional';
+const constants = require('../lib/constants');
+const ROLE_MANDATORY = constants.ROLE_MANDATORY;
+const ROLE_OPTIONAL = constants.ROLE_OPTIONAL;
 
 describe('helpers test suite', function suite() {
     describe('parseCutomizedRoles tests', function suite() {
@@ -31,13 +32,35 @@ describe('helpers test suite', function suite() {
         });
     });
 
+    describe('getComputedRoleResult tests', function suite() {
+        it('should be able to copute a comma seperated list roles correctly', function () {
+            let roles = {
+                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+            };
+            let user_count = 9;
+
+            //TODO expected to have all mandatory roles and atleast 3 optional roles.
+        });
+
+        it('should be able to copute a comma seperated list from 1 set each of mandatory & optional roles correctly', function () {
+            let roles = {
+                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+            };
+            let user_count = 5;
+
+            //TODO expected to have all mandatory roles and no optional roles.
+        });
+    });
+
     describe('fillArray tests', function suite() {
         it('should be able to fill array correctly', function () {
-            var result = helper.fillArray('test', 2);
+            let result = helper.fillArray('test', 2);
             result = result.concat(helper.fillArray('test2', 5));
             result = result.concat(helper.fillArray('test3', 10));
 
-            var assertObj = _.countBy(result, _.identity);
+            let assertObj = _.countBy(result, _.identity);
             expect(assertObj.test).to.equal(2);
             expect(assertObj.test2).to.equal(5);
             expect(assertObj.test3).to.equal(10);

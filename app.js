@@ -30,13 +30,17 @@ if (is_debug) {
 const slackCommunicationService = require('./services/slack-communication-service');
 
 /* String constants */
-const MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
-const ROLE_REMOVED_KEY = 'removed';
-const ROLE_PREFERENCE_SEPERATOR = ':';
+const constants = require('./lib/constants');
+const ROLE_MANDATORY = constants.ROLE_MANDATORY;
+const ROLE_OPTIONAL = constants.ROLE_OPTIONAL;
+const MESSAGE_SEPERATOR = constants.MESSAGE_SEPERATOR;
+const ROLE_REMOVED_KEY = constants.ROLE_REMOVED_KEY;
+const ROLE_PREFERENCE_SEPERATOR = constants.ROLE_PREFERENCE_SEPERATOR;
+
 //commands
-const COMMAND_DELIMITER = '//';
-const COMMAND_INIT = 'init';
-const COMMAND_START = 'start';
+const COMMAND_DELIMITER = constants.COMMAND_DELIMITER;
+const COMMAND_INIT = constants.COMMAND_INIT;
+const COMMAND_START = constants.COMMAND_START;
 
 /**
  * Initialize bot and controller.
@@ -177,7 +181,7 @@ slackCommunicationService
                       convo.next();
                     }
                   }]);
-                  convo.next();
+              convo.next();
             }
           },
           {
@@ -190,10 +194,11 @@ slackCommunicationService
           }
         ]);
       };
-      parseCustomizedRoles = function(response, convo){
-        let roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
-
-        convo.say(JSON.stringify(roles));
+      parseCustomizedRoles = function (response, convo) {
+        const roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
+        let user_count = (globalUtil.getUsers() || []).length;
+        let roleList = helpers.getComputedRoleResult(roles, user_count);
+        //convo.say(JSON.stringify(roleList));
       };
 
       parseCommaSeperatedRoles = function (response, convo) {
@@ -223,7 +228,7 @@ slackCommunicationService
             role_pref: role_pref
           }, convo);
           convo.next();
-        }else{
+        } else {
           convo.repeat();
         }
       };
@@ -244,7 +249,7 @@ slackCommunicationService
           if (roleCount !== (all_user_data.length)) {
             convo.say('Number of roles[' + roleCount + '] doesnt match the number of users[' +
               all_user_data.length + '] in this channel. Retry with !start command');
-              convo.repeat();
+            convo.repeat();
           } else {
 
             let users = _.map(all_user_data, function (currentObject) {

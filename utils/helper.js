@@ -2,8 +2,9 @@
 
 const shuffle = require('shuffle-array');
 const _ = require('underscore');
-const ROLE_MANDATORY = 'role_mandatory';
-const ROLE_OPTIONAL = 'role_optional';
+const constants = require('../lib/constants');
+const ROLE_MANDATORY = constants.ROLE_MANDATORY;
+const ROLE_OPTIONAL = constants.ROLE_OPTIONAL;
 const ROLE_CATEGORY_SPLIT_DELIMITER = '|';
 const ROLE_SEPERATOR = ',';
 const ROLE_COUNT_SEPERATOR = ':';
@@ -71,10 +72,21 @@ function fillArray(elementToRepeat, repeatTimes) {
     return Array.apply(null, Array(repeatTimes)).map(function () { return elementToRepeat; });
 }
 
+function getComputedRoleResult(roles, userCount){
+        let roleInput = roles[ROLE_MANDATORY];// take mandatory roles as is.
+        if(roleInput.length >= user_count){
+          convo.say('# of mandatory roles are equal or greater then the number of users in the channel, optional roles, if any will be ignored');
+          //TODO should we compute roled form just mandatory roles? or warn/halt?
+        }else{
+          //TODO mandatory role count is less than user count, use all mandatory roles and fill the rest with optional roles.
+        }
+}
+
 module.exports = {
     fillArray: fillArray,
     formatUptime: formatUptime,
     getCommaSeperatedRolesFromCustomFormat: getCommaSeperatedRolesFromCustomFormat,
+    getComputedRoleResult : getComputedRoleResult,
     getUserPreferredName: getUserPreferredName,
     shuffle: shuffle,//use shuffle-array module's shuffle for now.
     splitAndTrimByCharacter: splitAndTrimByCharacter
