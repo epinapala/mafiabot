@@ -1,5 +1,7 @@
 /*jshint esnext : true*/
 
+'use strict';
+
 const shuffle = require('shuffle-array');
 const _ = require('underscore');
 const constants = require('../lib/constants');
@@ -73,13 +75,23 @@ function fillArray(elementToRepeat, repeatTimes) {
 }
 
 function getComputedRoleResult(roles, userCount){
-        let roleInput = roles[ROLE_MANDATORY];// take mandatory roles as is.
-        if(roleInput.length >= user_count){
-          convo.say('# of mandatory roles are equal or greater then the number of users in the channel, optional roles, if any will be ignored');
-          //TODO should we compute roled form just mandatory roles? or warn/halt?
-        }else{
-          //TODO mandatory role count is less than user count, use all mandatory roles and fill the rest with optional roles.
-        }
+    let finalRoles = roles[ROLE_MANDATORY]; // take mandatory roles as is.
+
+    if (finalRoles.length < userCount) {
+        // Add optional roles if needed
+        finalRoles = finalRoles.concat(
+            // shuffle and get the remaining roles,
+            // remaining = requestsed (userCount) <MINUS> already filled (finalRoles.length)
+            shuffle(roles[ROLE_OPTIONAL]).slice(0, userCount - finalRoles.length)
+        );
+    }
+
+    if (finalRoles.length !== userCount) {
+        // Reset if we are unable to fill the exact number of roles required.
+        finalRoles = [];
+    }
+
+    return finalRoles;
 }
 
 module.exports = {

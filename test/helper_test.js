@@ -33,24 +33,71 @@ describe('helpers test suite', function suite() {
     });
 
     describe('getComputedRoleResult tests', function suite() {
-        it('should be able to copute a comma seperated list roles correctly', function () {
+        it('should be able to compute a comma seperated list of roles correctly', function () {
             let roles = {
                 [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
                 [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
             };
-            let user_count = 9;
 
-            //TODO expected to have all mandatory roles and atleast 3 optional roles.
+            let user_count = 9;
+            var result = helper.getComputedRoleResult(roles, user_count);
+            expect(result).to.have.lengthOf(user_count);
+            expect(result).to.include("m1");
+            expect(result).to.include("m2");
+            expect(result).to.include("m3");
+            expect(result).to.include("m4"); // cannot assert anything else.
         });
 
-        it('should be able to copute a comma seperated list from 1 set each of mandatory & optional roles correctly', function () {
+        it('should not assign roles when mandatory role count exceed user count', function () {
             let roles = {
                 [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
                 [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
             };
-            let user_count = 5;
 
-            //TODO expected to have all mandatory roles and no optional roles.
+            var result = helper.getComputedRoleResult(roles, 5);
+            expect(result).to.be.empty;
+        });
+
+        it('should be able to compute a comma seperated list from 1 set each of mandatory & optional roles correctly', function () {
+            let roles = {
+                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+            };
+
+            var result = helper.getComputedRoleResult(roles, 6);
+            expect(result).to.deep.equal(["m1", "m2", "m2", "m3", "m4", "m4"]);
+        });
+
+        it('should be able to assign al roles from optional when there are no mandatory roles', function () {
+            let roles = {
+                [ROLE_MANDATORY] : [],
+                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+            };
+
+            let user_count = 4;
+            var result = helper.getComputedRoleResult(roles, user_count);
+            expect(result).to.have.lengthOf(user_count);
+            expect(result).to.include("o3"); //can't check for anything else.
+        });
+
+        it('should not assign any roles when total roles given is less than the number of users', function () {
+            let roles = {
+                [ROLE_MANDATORY] : ["m1", "m2", "m2"],
+                [ROLE_OPTIONAL] : ["o1", "o2", "o2"]
+            };
+
+            var result = helper.getComputedRoleResult(roles, 7);
+            expect(result).to.be.empty;
+        });
+
+        it('should return no roles if there are no users', function () {
+            let roles = {
+                [ROLE_MANDATORY] : ["m1", "m2", "m2"],
+                [ROLE_OPTIONAL] : ["o1", "o2", "o2"]
+            };
+
+            var result = helper.getComputedRoleResult(roles, 0);
+            expect(result).to.be.empty;
         });
     });
 
