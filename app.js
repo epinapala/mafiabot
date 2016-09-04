@@ -1,4 +1,4 @@
-/*jshint -W117, expr: true, node: true, esnext : true*/
+/*jshint expr: true, node: true, esnext : true*/
 
 'use strict';
 
@@ -125,7 +125,7 @@ slackCommunicationService
     /* Implementation for start command */
     controller.hears([COMMAND_DELIMITER + COMMAND_START], ['direct_message'], function (bot, message) {
 
-      initConvo = function (response, convo) {
+      let initConvo = function (response, convo) {
         convo.ask('Do you want to customize roles?  Say YES, NO or DONE to quit.', [
           {
             pattern: 'done',
@@ -196,14 +196,15 @@ slackCommunicationService
           }
         ]);
       };
-      parseCustomizedRoles = function (response, convo) {
+      let parseCustomizedRoles = function (response, convo) {
         const roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
         let user_count = (globalUtil.getUsers() || []).length;
-        let roleList = helpers.getComputedRoleResult(roles, user_count);
-        //convo.say(JSON.stringify(roleList));
+        response.text = helpers.getComputedRoleResult(roles, user_count).join();
+        parseCommaSeperatedRoles(response, convo);
+        convo.next();
       };
 
-      parseCommaSeperatedRoles = function (response, convo) {
+      let parseCommaSeperatedRoles = function (response, convo) {
         let should_exit = false;
         let role_pref = {};
         let roles = response.text // extract actual message
@@ -235,7 +236,7 @@ slackCommunicationService
         }
       };
 
-      matchRolesForPreferenceUsers = function (roles_meta, convo) {
+      let matchRolesForPreferenceUsers = function (roles_meta, convo) {
         let roles = roles_meta.roles;
         let roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
         let promises = [];
@@ -278,7 +279,7 @@ slackCommunicationService
         }
       };
 
-      matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {
+      let matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {
         let shuffledUsers = helpers.shuffle(users);
         let shuffledRoles = helpers.shuffle(roles);
 
