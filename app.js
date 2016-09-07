@@ -209,9 +209,17 @@ slackCommunicationService
            if ((roles[ROLE_MANDATORY].length + roles[ROLE_OPTIONAL].length) >= user_count && roles[ROLE_OPTIONAL].length < 1) {
             convo.say('Note: No optional roles found.');
           }**/
-          response.text = helpers.getComputedRoleResult(roles, user_count).join();
-          parseCommaSeperatedRoles(response, convo);
-          convo.next();
+
+          try {
+            response.text = helpers.getComputedRoleResult(roles, user_count).join();
+            parseCommaSeperatedRoles(response, convo);
+            convo.next();
+          }
+          catch (err) {
+            convo.say(err.message);
+            convo.repeat();
+            convo.next();
+          }
         }
       };
 

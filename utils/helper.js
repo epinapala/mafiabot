@@ -49,9 +49,11 @@ function splitAndTrimByCharacter(input, char) {
 }
 
 function getCommaSeperatedRolesFromCustomFormat(input) {
+    console.log(input);
     let allRolesInputArray = splitAndTrimByCharacter(input, ROLE_CATEGORY_SEPERATOR);
     let customMandatoryRoleArray = splitAndTrimByCharacter(allRolesInputArray[0], ROLE_SEPERATOR);
     let customOptionalRoleArray = splitAndTrimByCharacter(allRolesInputArray[1], ROLE_SEPERATOR);
+    
     return {
         [ROLE_MANDATORY]: fillRolesByRoleCount(customMandatoryRoleArray, ROLE_MANDATORY),
         [ROLE_OPTIONAL]: fillRolesByRoleCount(customOptionalRoleArray, ROLE_OPTIONAL)
@@ -89,7 +91,7 @@ function getComputedRoleResult(roles, userCount) {
                 shuffle(roles[ROLE_OPTIONAL]).slice(0, userCount - finalRoles.length)
             );
         }else{
-            return finalRoles;
+            throw new Error('total roles found are not sufficient to start a game: ' + _.flatten([roles[ROLE_MANDATORY], roles[ROLE_OPTIONAL]]).join());
         }
     }
 

@@ -18,8 +18,8 @@ describe('helpers test suite', function suite() {
             let input = 'm1:1,m2:2,m3:1,m4:2|o1:1,o2:2,o3:4';
             let result = helper.getCommaSeperatedRolesFromCustomFormat(input);
             expect(result).to.deep.equal({
-                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+                [ROLE_MANDATORY]: ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
             });
         });
 
@@ -27,8 +27,8 @@ describe('helpers test suite', function suite() {
             let input = 'm1:1,:m2:2,m3:1,m4:2|o1:1,o2:2,o3::4';
             let result = helper.getCommaSeperatedRolesFromCustomFormat(input);
             expect(result).to.deep.equal({
-                [ROLE_MANDATORY] : ["m1", "m3", "m4", "m4"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2"]
+                [ROLE_MANDATORY]: ["m1", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2"]
             });
         });
     });
@@ -36,8 +36,8 @@ describe('helpers test suite', function suite() {
     describe('getComputedRoleResult tests', function suite() {
         it('should be able to compute a comma seperated list of roles correctly', function () {
             let roles = {
-                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+                [ROLE_MANDATORY]: ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
             };
 
             let user_count = 9;
@@ -51,8 +51,8 @@ describe('helpers test suite', function suite() {
 
         it('should assign roles in such a way that optional roles are filled in remianing slots.', function () {
             let roles = {
-                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o3", "o4", "o5", "o6", "o7","o8", "o9"]
+                [ROLE_MANDATORY]: ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o3", "o4", "o5", "o6", "o7", "o8", "o9"]
             };
 
             let user_count = 10;
@@ -62,8 +62,8 @@ describe('helpers test suite', function suite() {
 
         it('should not assign roles when mandatory role count exceed user count', function () {
             let roles = {
-                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+                [ROLE_MANDATORY]: ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
             };
 
             var result = helper.getComputedRoleResult(roles, 5);
@@ -72,8 +72,8 @@ describe('helpers test suite', function suite() {
 
         it('should be able to compute a comma seperated list from 1 set each of mandatory & optional roles correctly', function () {
             let roles = {
-                [ROLE_MANDATORY] : ["m1", "m2", "m2", "m3", "m4", "m4"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+                [ROLE_MANDATORY]: ["m1", "m2", "m2", "m3", "m4", "m4"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
             };
 
             var result = helper.getComputedRoleResult(roles, 6);
@@ -82,8 +82,8 @@ describe('helpers test suite', function suite() {
 
         it('should be able to assign al roles from optional when there are no mandatory roles', function () {
             let roles = {
-                [ROLE_MANDATORY] : [],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
+                [ROLE_MANDATORY]: [],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2", "o3", "o3", "o3", "o3"]
             };
 
             let user_count = 4;
@@ -94,8 +94,8 @@ describe('helpers test suite', function suite() {
 
         it('should not assign any roles when total roles given is less than the number of users', function () {
             let roles = {
-                [ROLE_MANDATORY] : ["m1", "m2", "m2"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2"]
+                [ROLE_MANDATORY]: ["m1", "m2", "m2"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2"]
             };
 
             var result = helper.getComputedRoleResult(roles, 7);
@@ -104,12 +104,23 @@ describe('helpers test suite', function suite() {
 
         it('should return no roles if there are no users', function () {
             let roles = {
-                [ROLE_MANDATORY] : ["m1", "m2", "m2"],
-                [ROLE_OPTIONAL] : ["o1", "o2", "o2"]
+                [ROLE_MANDATORY]: ["m1", "m2", "m2"],
+                [ROLE_OPTIONAL]: ["o1", "o2", "o2"]
             };
 
             var result = helper.getComputedRoleResult(roles, 0);
             expect(result).to.be.empty;
+        });
+
+        it.only("Throw error when num fo roles sent arent sufficient to start a game.", function () {
+            let roles = {
+                [ROLE_MANDATORY]: ["m1", "m1"],
+                [ROLE_OPTIONAL]: ["o2", "o2"]
+            };
+            expect(function () {
+                helper.getComputedRoleResult(roles, 9);
+            }).to.throw(Error, 'total roles found are not sufficient to start a game: ' +
+            _.flatten([roles[ROLE_MANDATORY], roles[ROLE_OPTIONAL]]).join());
         });
     });
 
