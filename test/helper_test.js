@@ -91,17 +91,7 @@ describe('helpers test suite', function suite() {
             expect(result).to.have.lengthOf(user_count);
             expect(result).to.include("o3"); //can't check for anything else.
         });
-
-        it('should not assign any roles when total roles given is less than the number of users', function () {
-            let roles = {
-                [ROLE_MANDATORY]: ["m1", "m2", "m2"],
-                [ROLE_OPTIONAL]: ["o1", "o2", "o2"]
-            };
-
-            var result = helper.getComputedRoleResult(roles, 7);
-            expect(result).to.be.empty;
-        });
-
+        
         it('should return no roles if there are no users', function () {
             let roles = {
                 [ROLE_MANDATORY]: ["m1", "m2", "m2"],
