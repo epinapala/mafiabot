@@ -205,11 +205,6 @@ slackCommunicationService
         } else {
           const roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
           let user_count = (globalUtil.getUsers() || []).length;
-          /** TODO revisit this logic
-           if ((roles[ROLE_MANDATORY].length + roles[ROLE_OPTIONAL].length) >= user_count && roles[ROLE_OPTIONAL].length < 1) {
-            convo.say('Note: No optional roles found.');
-          }**/
-
           try {
             response.text = helpers.getComputedRoleResult(roles, user_count).join();
             parseCommaSeperatedRoles(response, convo);

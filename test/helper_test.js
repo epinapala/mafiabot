@@ -112,7 +112,7 @@ describe('helpers test suite', function suite() {
             expect(result).to.be.empty;
         });
 
-        it.only("Throw error when num fo roles sent arent sufficient to start a game.", function () {
+        it("Throw error when num fo roles sent arent sufficient to start a game.", function () {
             let roles = {
                 [ROLE_MANDATORY]: ["m1", "m1"],
                 [ROLE_OPTIONAL]: ["o2", "o2"]
