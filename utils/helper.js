@@ -91,7 +91,8 @@ function getComputedRoleResult(roles, userCount) {
                 shuffle(roles[ROLE_OPTIONAL]).slice(0, userCount - finalRoles.length)
             );
         }else{
-            throw new Error('total roles found are not sufficient to start a game: ' + _.flatten([roles[ROLE_MANDATORY], roles[ROLE_OPTIONAL]]).join());
+            throw new Error('Total Number of roles[' + (finalRoles.length + roles[ROLE_OPTIONAL].length) + '] possible doesnt match the number of users[' +
+              userCount + '] in this channel. Retry with start command');
         }
     }
 

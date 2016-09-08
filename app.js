@@ -139,8 +139,8 @@ slackCommunicationService
             pattern: bot.utterances.yes,
             callback: function (response, convo) {
               convo.ask(
-                'Great, Please use the following format to specify roles' + '\n' +
-                'mandatory_role1:max,mandatory_role2:max...etc|opt_role_1:max,opt_role_2:max..etc' + '\n' +
+                'Please use the following format to specify roles' + '\n' +
+                '* mandatory_role1:max,mandatory_role2:max...etc|opt_role_1:max,opt_role_2:max..etc*' + '\n' +
                 'type \'done\' to quit any time',
                 [
                   {

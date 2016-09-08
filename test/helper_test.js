@@ -103,14 +103,15 @@ describe('helpers test suite', function suite() {
         });
 
         it("Throw error when num fo roles sent arent sufficient to start a game.", function () {
+            let userCount = 9;
             let roles = {
                 [ROLE_MANDATORY]: ["m1", "m1"],
                 [ROLE_OPTIONAL]: ["o2", "o2"]
             };
             expect(function () {
-                helper.getComputedRoleResult(roles, 9);
-            }).to.throw(Error, 'total roles found are not sufficient to start a game: ' +
-            _.flatten([roles[ROLE_MANDATORY], roles[ROLE_OPTIONAL]]).join());
+                helper.getComputedRoleResult(roles, userCount);
+            }).to.throw(Error, 'Total Number of roles[' + (_.flatten([roles[ROLE_MANDATORY], roles[ROLE_OPTIONAL]]).length) + '] possible doesnt match the number of users[' +
+              userCount + '] in this channel. Retry with start command');
         });
     });
 
