@@ -39,6 +39,7 @@ const MESSAGE_SEPERATOR = constants.MESSAGE_SEPERATOR;
 const ROLE_REMOVED_KEY = constants.ROLE_REMOVED_KEY;
 const ROLE_PREFERENCE_SEPERATOR = constants.ROLE_PREFERENCE_SEPERATOR;
 const ROLE_CATEGORY_SEPERATOR = constants.ROLE_CATEGORY_SEPERATOR;
+const ROLE_COUNT_SEPERATOR = constants.ROLE_COUNT_SEPERATOR;
 
 //commands
 const COMMAND_DELIMITER = constants.COMMAND_DELIMITER;
@@ -140,7 +141,7 @@ slackCommunicationService
             callback: function (response, convo) {
               convo.ask(
                 'Please use the following format to specify roles' + '\n' +
-                '* mandatory_role1:max,mandatory_role2:max...etc|opt_role_1:max,opt_role_2:max..etc*' + '\n' +
+                '* mandatory_role1'+ ROLE_COUNT_SEPERATOR +'max,mandatory_role2'+ ROLE_COUNT_SEPERATOR +'max...etc|opt_role_1'+ ROLE_COUNT_SEPERATOR +'max,opt_role_2'+ ROLE_COUNT_SEPERATOR +'max..etc*' + '\n' +
                 'type \'done\' to quit any time',
                 [
                   {

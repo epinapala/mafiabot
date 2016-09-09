@@ -15,7 +15,7 @@ const ROLE_OPTIONAL = constants.ROLE_OPTIONAL;
 describe('helpers test suite', function suite() {
     describe('parseCutomizedRoles tests', function suite() {
         it('should be able to parse custom roles correctly', function () {
-            let input = 'm1:1,m2:2,m3:1,m4:2|o1:1,o2:2,o3:4';
+            let input = 'm1-1,m2-2,m3-1,m4-2|o1-1,o2-2,o3-4';
             let result = helper.getCommaSeperatedRolesFromCustomFormat(input);
             expect(result).to.deep.equal({
                 [ROLE_MANDATORY]: ["m1", "m2", "m2", "m3", "m4", "m4"],
@@ -24,7 +24,7 @@ describe('helpers test suite', function suite() {
         });
 
         it('should be able to skip malformed elements and parse rest of the custom roles correctly', function () {
-            let input = 'm1:1,:m2:2,m3:1,m4:2|o1:1,o2:2,o3::4';
+            let input = 'm1-1,-m2-2,m3-1,m4-2|o1-1,o2-2,o3--4';
             let result = helper.getCommaSeperatedRolesFromCustomFormat(input);
             expect(result).to.deep.equal({
                 [ROLE_MANDATORY]: ["m1", "m3", "m4", "m4"],

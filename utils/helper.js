@@ -7,9 +7,9 @@ const _ = require('underscore');
 const constants = require('../lib/constants');
 const ROLE_MANDATORY = constants.ROLE_MANDATORY;
 const ROLE_OPTIONAL = constants.ROLE_OPTIONAL;
-const ROLE_CATEGORY_SEPERATOR = '|';
-const ROLE_SEPERATOR = ',';
-const ROLE_COUNT_SEPERATOR = ':';
+const ROLE_CATEGORY_SEPERATOR = constants.ROLE_CATEGORY_SEPERATOR;
+const ROLE_SEPERATOR = constants.ROLE_SEPERATOR;
+const ROLE_COUNT_SEPERATOR = constants.ROLE_COUNT_SEPERATOR;
 
 function formatUptime(uptime) {
     let unit = 'second';
@@ -63,7 +63,7 @@ function getCommaSeperatedRolesFromCustomFormat(input) {
 function fillRolesByRoleCount(roleArray, roleType) {
     let roles = [];
     _.each(roleArray, function (item, index) {
-        let colonMatches = item.match(/:/g);
+        let colonMatches = item.match(new RegExp(ROLE_COUNT_SEPERATOR, "g"));
         if (colonMatches && colonMatches.length === 1) {
             let itemArr = splitAndTrimByCharacter(item, ROLE_COUNT_SEPERATOR);
             let curRoles = fillArray(itemArr[0], parseInt(itemArr[1]));
