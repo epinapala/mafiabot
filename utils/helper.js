@@ -53,7 +53,7 @@ function getCommaSeperatedRolesFromCustomFormat(input) {
     let allRolesInputArray = splitAndTrimByCharacter(input, ROLE_CATEGORY_SEPERATOR);
     let customMandatoryRoleArray = splitAndTrimByCharacter(allRolesInputArray[0], ROLE_SEPERATOR);
     let customOptionalRoleArray = splitAndTrimByCharacter(allRolesInputArray[1], ROLE_SEPERATOR);
-    
+
     return {
         [ROLE_MANDATORY]: fillRolesByRoleCount(customMandatoryRoleArray, ROLE_MANDATORY),
         [ROLE_OPTIONAL]: fillRolesByRoleCount(customOptionalRoleArray, ROLE_OPTIONAL)
@@ -80,28 +80,31 @@ function fillArray(elementToRepeat, repeatTimes) {
 }
 
 function getComputedRoleResult(roles, userCount) {
-    let finalRoles = roles[ROLE_MANDATORY]; // take mandatory roles as is.
-
-    if (finalRoles.length < userCount) {
-        if ((finalRoles.length + roles[ROLE_OPTIONAL].length) >= userCount) {
-            // Add optional roles if needed
-            finalRoles = finalRoles.concat(
-                // shuffle and get the remaining roles,
-                // remaining = requestsed (userCount) <MINUS> already filled (finalRoles.length)
-                shuffle(roles[ROLE_OPTIONAL]).slice(0, userCount - finalRoles.length)
-            );
-        }else{
-            throw new Error('Total Number of roles[' + (finalRoles.length + roles[ROLE_OPTIONAL].length) + '] possible doesnt match the number of users[' +
-              userCount + '] in this channel. Retry with start command');
+    if (userCount === 0) {
+        throw new Error('No users found. Cannot generate roles.');
+    } else {
+        let finalRoles = roles[ROLE_MANDATORY]; // take mandatory roles as is.
+        if (finalRoles.length < userCount) {
+            if ((finalRoles.length + roles[ROLE_OPTIONAL].length) >= userCount) {
+                // Add optional roles if needed
+                finalRoles = finalRoles.concat(
+                    // shuffle and get the remaining roles,
+                    // remaining = requestsed (userCount) <MINUS> already filled (finalRoles.length)
+                    shuffle(roles[ROLE_OPTIONAL]).slice(0, userCount - finalRoles.length)
+                );
+            } else {
+                throw new Error('Total Number of roles[' + (finalRoles.length + roles[ROLE_OPTIONAL].length) + '] possible doesnt match the number of users[' +
+                    userCount + '] in this channel. Retry with start command');
+            }
+        } else if (finalRoles.length === userCount) {
+            //If mandatory roles equals usercount, then just return mandatory roles === to userCount.
+            return finalRoles;
+        } else {
+            //If mandatory roles are more than required, then shuffle and return mandatory roles === to userCount.
+            return (shuffle(finalRoles)).slice(0, userCount);
         }
+        return finalRoles;
     }
-
-    if (finalRoles.length !== userCount) {
-        // Reset if we are unable to fill the exact number of roles required.
-        finalRoles = [];
-    }
-
-    return finalRoles;
 }
 
 module.exports = {
