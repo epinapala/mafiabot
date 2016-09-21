@@ -1,42 +1,50 @@
-/** jshint esnext: true */
+/*jshint expr: true, node: true, esnext : true*/
 
-var bot;
-var controller;
-var Botkit = require('botkit');
-var _Promise = require('bluebird');
+'use strict';
+
+let bot;
+let controller;
+const Botkit = require('botkit');
+const _Promise = require('bluebird');
 
 /* utils */
-var minimist = require('minimist');
-var _ = require('underscore');
-var helpers = require('./utils/helper');
-var globalUtil = require('./utils/global');
+const minimist = require('minimist');
+const _ = require('underscore');
+const helpers = require('./utils/helper');
+const globalUtil = require('./utils/global');
 
 /* parse command line args for default params. */
-var storage_directory = minimist(process.argv.slice(2)).s || './storage';//read json file storage directory.
-var token = minimist(process.argv.slice(2)).t; //read slack token.
+const storage_directory = minimist(process.argv.slice(2)).s || './storage';//read json file storage directory.
+const token = minimist(process.argv.slice(2)).t; //read slack token.
 
 if (!token) {
   console.log('Slack token is required. Please use \'-t\' to set Slack token');
 }
 
-var organizer_id = minimist(process.argv.slice(2)).o; //Default organizer ID.
-var current_group_id = minimist(process.argv.slice(2)).g; //Default group ID.
-var is_debug = minimist(process.argv.slice(2)).d;// read debug mode flag.
+let organizer_id = minimist(process.argv.slice(2)).o; //Default organizer ID.
+let current_group_id = minimist(process.argv.slice(2)).g; //Default group ID.
+const is_debug = minimist(process.argv.slice(2)).d;// read debug mode flag.
 if (is_debug) {
   globalUtil.setIsDebugMode(is_debug);
 }
 
 /* Services */
-var slackCommunicationService = require('./services/slack-communication-service');
+const slackCommunicationService = require('./services/slack-communication-service');
 
 /* String constants */
-var MESSAGE_SEPERATOR = '-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-';
-var ROLE_REMOVED_KEY = 'removed';
-var ROLE_PREFERENCE_SEPERATOR = ':';
+const constants = require('./lib/constants');
+const ROLE_MANDATORY = constants.ROLE_MANDATORY;
+const ROLE_OPTIONAL = constants.ROLE_OPTIONAL;
+const MESSAGE_SEPERATOR = constants.MESSAGE_SEPERATOR;
+const ROLE_REMOVED_KEY = constants.ROLE_REMOVED_KEY;
+const ROLE_PREFERENCE_SEPERATOR = constants.ROLE_PREFERENCE_SEPERATOR;
+const ROLE_CATEGORY_SEPERATOR = constants.ROLE_CATEGORY_SEPERATOR;
+const ROLE_COUNT_SEPERATOR = constants.ROLE_COUNT_SEPERATOR;
+
 //commands
-var COMMAND_DELIMITER = '!';
-var COMMAND_INIT = 'init';
-var COMMAND_START = 'start';
+const COMMAND_DELIMITER = constants.COMMAND_DELIMITER;
+const COMMAND_INIT = constants.COMMAND_INIT;
+const COMMAND_START = constants.COMMAND_START;
 
 /**
  * Initialize bot and controller.
@@ -61,7 +69,7 @@ slackCommunicationService
         .retreiveAllGroups(bot, current_group_id).then(function (groups) {
           if (groups) {
             //Filter and get group by group ID
-            var group = _.find(groups, function (object) {
+            let group = _.find(groups, function (object) {
               return object.id === current_group_id;
             });
 
@@ -73,13 +81,13 @@ slackCommunicationService
               globalUtil.setUsers([]);
 
               //Get all users from group and iterate.
-              var users = group.members || [];
+              let users = group.members || [];
 
               //Set the user currently intiializing the game as organizer.
               if (message.user) {
                 organizer_id = message.user;
               }
-              var userInfoPromises = [];
+              let userInfoPromises = [];
               /* collect all promises for execution. */
               _.each(users, function (id, index) {
                 userInfoPromises.push(slackCommunicationService.retreiveUserInfo(bot, id));
@@ -88,7 +96,7 @@ slackCommunicationService
               /* use _Promise.all as we would like to reject even if one userInfo calls fails.*/
               _Promise.all(userInfoPromises)
                 .then(function resolved(results) {
-                  var all_users = 'Players :  ';
+                  let all_users = 'Players :  ';
                   results.forEach(function (user) {
                     user.preferred_name = helpers.getUserPreferredName(user);
                     if (user.is_bot) {
@@ -118,27 +126,111 @@ slackCommunicationService
 
     /* Implementation for start command */
     controller.hears([COMMAND_DELIMITER + COMMAND_START], ['direct_message'], function (bot, message) {
-      askRoles = function (response, convo) {
-        globalUtil.generateRandomWord();
-        convo.ask('What roles are you planning to assign? Please specify comma seperate. For specifying a role preference use colon and mention. Ex: Role1, Role2 ' + ROLE_PREFERENCE_SEPERATOR + ' @username, Role3.',
-          function (response, convo) {
-            parseRoles(response, convo);
+
+      let initConvo = function (response, convo) {
+        convo.ask('Do you want to customize roles?  Say YES, NO or DONE to quit.', [
+          {
+            pattern: 'done',
+            callback: function (response, convo) {
+              convo.say('OK, take your time!');
+              convo.next();
+            }
+          },
+          {
+            pattern: bot.utterances.yes,
+            callback: function (response, convo) {
+              convo.ask(
+                'Please use the following format to specify roles' + '\n' +
+                '* mandatory_role1'+ ROLE_COUNT_SEPERATOR +'max,mandatory_role2'+ ROLE_COUNT_SEPERATOR +'max...etc|opt_role_1'+ ROLE_COUNT_SEPERATOR +'max,opt_role_2'+ ROLE_COUNT_SEPERATOR +'max..etc*' + '\n' +
+                'type \'done\' to quit any time',
+                [
+                  {
+                    pattern: 'done',
+                    callback: function (response, convo) {
+                      convo.say('OK, take your time!');
+                      convo.next();
+                    }
+                  },
+                  {
+                    default: true,
+                    callback: function (response, convo) {
+                      parseCustomizedRoles(response, convo);
+                      convo.next();
+                    }
+                  }
+                ]);
+
+              convo.next();
+            }
+          },
+          {
+            pattern: bot.utterances.no,
+            callback: function (response, convo) {
+              globalUtil.generateRandomWord();
+              convo.ask(
+                'What roles are you planning to assign? Please specify comma seperated' + '\n' +
+                'For specifying a role preference use colon and mention. Ex: Role1, Role2 ' + ROLE_PREFERENCE_SEPERATOR + ' @username, Role3.' + '\n' +
+                'Type \'done\' anytime to quit.',
+                [{
+                  pattern: 'done',
+                  callback: function (response, convo) {
+                    convo.say('OK, take your time!');
+                    convo.next();
+                  }
+                },
+                  {
+                    default: true,
+                    callback: function (response, convo) {
+                      parseCommaSeperatedRoles(response, convo);
+                      convo.next();
+                    }
+                  }]);
+              convo.next();
+            }
+          },
+          {
+            default: true,
+            callback: function (response, convo) {
+              // just repeat the question
+              convo.repeat();
+              convo.next();
+            }
+          }
+        ]);
+      };
+      let parseCustomizedRoles = function (response, convo) {
+        if (response.text.indexOf(ROLE_CATEGORY_SEPERATOR) < 0) {
+          convo.say("Invalid input, Please try again...");
+          convo.repeat();
+          convo.next();
+        } else {
+          const roles = helpers.getCommaSeperatedRolesFromCustomFormat(response.text);
+          let user_count = (globalUtil.getUsers() || []).length;
+          try {
+            response.text = helpers.getComputedRoleResult(roles, user_count).join();
+            parseCommaSeperatedRoles(response, convo);
             convo.next();
-          });
+          }
+          catch (err) {
+            convo.say(err.message);
+            convo.repeat();
+            convo.next();
+          }
+        }
       };
 
-      parseRoles = function (response, convo) {
-        var should_exit = false;
-        var role_pref = {};
-        var roles = response.text // extract actual message
+      let parseCommaSeperatedRoles = function (response, convo) {
+        let should_exit = false;
+        let role_pref = {};
+        let roles = response.text // extract actual message
           .split(',') // split by comma
           .map( // trim each role
           Function.prototype.call, String.prototype.trim);
-        for (var i = 0; i < roles.length; i++) {
+        for (let i = 0; i < roles.length; i++) {
           if (roles[i].indexOf(ROLE_PREFERENCE_SEPERATOR) > -1) {
-            var rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
-            var cur_role = rolePlayerArr[0];
-            var requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
+            let rolePlayerArr = roles[i].split(':').map(Function.prototype.call, String.prototype.trim);
+            let cur_role = rolePlayerArr[0];
+            let requested_player_id = rolePlayerArr[1].replace('<@', '').replace('>', '');
             if (requested_player_id.indexOf('@') < 0) {
               roles[i] = ROLE_REMOVED_KEY;
               role_pref[requested_player_id] = cur_role;
@@ -154,36 +246,40 @@ slackCommunicationService
             role_pref: role_pref
           }, convo);
           convo.next();
+        } else {
+          convo.repeat();
         }
       };
 
-      matchRolesForPreferenceUsers = function (roles_meta, convo) {
-        var roles = roles_meta.roles;
-        var roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
-        var promises = [];
+      let matchRolesForPreferenceUsers = function (roles_meta, convo) {
+        let roles = roles_meta.roles;
+        let roleCount = roles.length + Object.keys(roles_meta.role_pref).length;
+        let promises = [];
 
-        var all_user_data = globalUtil.getUsers() || [];
+        let all_user_data = globalUtil.getUsers() || [];
         if (all_user_data.length < 1) {
           convo.say('Oh no! Not able to read users list!');
+          convo.repeat();
         } else {
           all_user_data = _.without(all_user_data, _.findWhere(all_user_data, {
             id: organizer_id
           }));
           if (roleCount !== (all_user_data.length)) {
             convo.say('Number of roles[' + roleCount + '] doesnt match the number of users[' +
-              all_user_data.length + '] in this channel. Retry with !start command');
+              all_user_data.length + '] in this channel. Retry with start command');
+            convo.repeat();
           } else {
 
-            var users = _.map(all_user_data, function (currentObject) {
+            let users = _.map(all_user_data, function (currentObject) {
               return _.pick(currentObject, 'name', 'id', 'preferred_name');
             });
 
-            var roles_pref_obj = roles_meta.role_pref;
-            var user_ids = Object.keys(roles_pref_obj);
-            var users_to_process = [];
+            let roles_pref_obj = roles_meta.role_pref;
+            let user_ids = Object.keys(roles_pref_obj);
+            let users_to_process = [];
 
-            for (var j = 0; j < users.length; j++) {
-              var _user = users[j];
+            for (let j = 0; j < users.length; j++) {
+              let _user = users[j];
               if (roles_pref_obj[_user.id]) {
                 _user.role = roles_pref_obj[_user.id];
                 promises.push(slackCommunicationService.messageUser(bot, _user));
@@ -198,16 +294,16 @@ slackCommunicationService
         }
       };
 
-      matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {
-        var shuffledUsers = helpers.shuffle(users);
-        var shuffledRoles = helpers.shuffle(roles);
+      let matchRolesForNonPreferenceUsers = function (users, roles, promises, convo, roles_meta) {
+        let shuffledUsers = helpers.shuffle(users);
+        let shuffledRoles = helpers.shuffle(roles);
 
         //Loop through shuffled users to fill roles and send messages
         //TODO normalize this logic to build messages in loop and then send messages in just 2 promises.
         //Send game name to organizer
         promises.push(slackCommunicationService.messageGameNameToOrganizer(convo));
         _.each(shuffledUsers, function (user, index) {
-          var user_id = user.id;
+          let user_id = user.id;
           if (!user.is_processed) {
             user.role = shuffledRoles[index];
             promises.push(slackCommunicationService.messageUser(bot, user));
@@ -219,7 +315,7 @@ slackCommunicationService
          * We do a reflect of each promise inside all, this ensures 
          * promises are resolved wven when there are one or more rejects.
          */
-        var promiseResults = _Promise.all(
+        let promiseResults = _Promise.all(
           promises.map(
             function (promise) {
               return promise.reflect();
@@ -239,7 +335,7 @@ slackCommunicationService
         console.log('Here is a summary of all users and their roles : ' + JSON.stringify(users));
       };
       //initialize conversation with the organizer
-      bot.startConversation(message, askRoles);
+      bot.startConversation(message, initConvo);
     });
   },
   /** Handle the final common rejection here. */

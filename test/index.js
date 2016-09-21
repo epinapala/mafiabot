@@ -1,4 +1,4 @@
-var expect = require('chai').expect,
+/*var expect = require('chai').expect,
     mafiabot = require('..');
 
 describe('mafiabot', function() {
@@ -7,3 +7,4 @@ describe('mafiabot', function() {
     done();
   });
 });
+*/
