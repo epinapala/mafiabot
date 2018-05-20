@@ -6,3 +6,5 @@ storage
 .vscode
 npm-debug.log
 /jsconfig.json
+start.sh
+yarn.lock
