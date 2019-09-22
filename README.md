@@ -7,18 +7,27 @@ A simple slackbot to help the mafia game organizer. The bot uses botkit, which i
 
 
 ---
-##What is working?
+## What is working?
 * Bot development is in a very early stage.
 * Only shuffling of users(in the group specified) and roles is supported.
 * For now only private channels(groups) are supported.
 
 ----
-##How can I use it?
+## How can I use it?
 
-###Start bot
+### Using with Docker
+
+`$ docker run -e token={slack_bot_token}  -e organizer={organizer_id} -e group="{slack_group_id}" -d -d docker.pkg.github.com/epinapala/mafiabot/mafiabot:latest`
+
+* note: If you want to run th contianer at startup use `--restart unless-stopped` after `run`
+
+
+### Using with NodeJS
+
+#### Start bot
 `$ node app.js -t {slack_bot_token}  -o {organizer_id} -g {slack_group_id}`
 
-**** note : use '-d' to start bot in debug mode, this ensures messages are sent only to the organizer for testing.
+* note : use '-d' to start bot in debug mode, this ensures messages are sent only to the organizer for testing.
 
 ####Example response
 `info: ** Using simple storage. Saving data to ./storage`
