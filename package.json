@@ -4,7 +4,9 @@
   "description": "A simple slackbot to help the mafia game organizer. The bot uses botkit, which inturn uses slack RTM api to communicate with slack.",
   "main": "app.js",
   "scripts": {
-    "test": "node_modules/.bin/grunt ci"
+    "test": "node_modules/.bin/grunt ci",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -29,7 +31,8 @@
     "minimist": "^1.2.0",
     "random-words": "0.0.1",
     "shuffle-array": "^1.0.0",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "snyk": "^1.161.1"
   },
   "devDependencies": {
     "botkit-mock": "amplicity/BotMock",
@@ -41,5 +44,6 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-debug-task": "^0.1.8",
     "grunt-mocha-cli": "^2.0.0"
-  }
+  },
+  "snyk": true
 }
